@@ -1,0 +1,4 @@
+[run]
+source = pipreq
+branch = 1
+omit = */test/*
