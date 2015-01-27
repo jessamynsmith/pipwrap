@@ -24,12 +24,14 @@ Usage
 
 ::
 
-    # Interactively create .requirementsrc file from currently installed packages
-    $ pip freeze > freeze.txt
-    $ pipreq -c -p freeze.txt
+Interactively create .requirementsrc file from currently installed packages
 
-    # Generate requirements files from .requirementsrc file
-    $ pipreq -g
+    pip freeze > freeze.txt
+    pipreq -c -p freeze.txt
+
+Generate requirements files from .requirementsrc file
+
+    pipreq -g
 
 Development
 -----
