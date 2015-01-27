@@ -83,8 +83,7 @@ def main():
             cli_parser.error("Create (-c) requires a list of packages (-p)")
         create_rc_file(cli_args.packages)
     else:
-        print "Must specify -g or -c and -p\n"
-        print cli_parser.print_help()
+        cli_parser.error("Must specify -g or -c and -p")
 
 
 if __name__ == '__main__':
