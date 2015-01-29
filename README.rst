@@ -45,7 +45,7 @@ Fork the project on github and git clone your fork, e.g.:
 Create a virtualenv and install dependencies:
 
     mkvirtualenv pipreq
-    pip install -r requirements.txt -r requirements_dev.txt
+    pip install -r requirements.txt -r requirements_test.txt
 
 Run tests and view coverage:
 
