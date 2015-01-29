@@ -7,7 +7,8 @@ pipreq simplifies handling Python project requirements across multiple environme
 - Generate a set of requirements files from an rc file
 
 
-[![Build Status](https://travis-ci.org/jessamynsmith/pipreq.svg?branch=master)](https://travis-ci.org/jessamynsmith/pipreq)
+.. image:: https://travis-ci.org/jessamynsmith/pipreq.svg?branch=master
+    :target: https://travis-ci.org/jessamynsmith/pipreq
 
 Setup
 -----
