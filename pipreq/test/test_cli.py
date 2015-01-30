@@ -1,4 +1,5 @@
 from mock import patch
+import tempfile
 import unittest
 
 from pipreq import cli
@@ -23,6 +24,15 @@ class TestCli(unittest.TestCase):
         error_message = cli.verify_args(args)
 
         self.assertEqual('Create (-c) requires a list of packages (-p)', error_message)
+
+    def test_verify_args_create_with_packages(self):
+        package_file = tempfile.NamedTemporaryFile()
+
+        args = self.parser.parse_args(['-c', '-p%s' % package_file.name])
+
+        error_message = cli.verify_args(args)
+
+        self.assertEqual(None, error_message)
 
     def test_verify_args_generate(self):
         args = self.parser.parse_args(['-g'])

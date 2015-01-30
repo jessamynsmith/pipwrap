@@ -20,8 +20,8 @@ def create_parser():
 
 def verify_args(args):
     if args.create and not args.packages:
-            return 'Create (-c) requires a list of packages (-p)'
-    elif not args.generate:
+        return 'Create (-c) requires a list of packages (-p)'
+    elif not args.create and not args.generate:
         return 'Must specify generate (-g) or create (-c) with packages (-p)'
     return None
 
