@@ -10,7 +10,8 @@ def create_parser():
 
     parser.add_argument('-g', '--generate', action='store_true', default=False,
                         help='Generate requirements files')
-    parser.add_argument('-c', '--create', action='store_true', default=False, help='Create rc file')
+    parser.add_argument('-c', '--create', action='store_true', default=False,
+                        help='Create (or update) rc file')
     parser.add_argument('-p', '--packages', type=argparse.FileType('r'), default=False,
                         help='list of installed packages (e.g. pip freeze)')
 

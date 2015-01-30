@@ -28,8 +28,20 @@ class Command(object):
         config.read(rc_file)
         return config
 
+    def _get_option(self, config, option):
+        for section in config.sections():
+            try:
+                return section, config.get(section, option)
+            except ConfigParser.NoOptionError:
+                continue
+        return None, None
+
+    def _format_requirements_line(self, package, version):
+        return '%s==%s\n' % (package, version)
+
     def generate_requirements_files(self):
         config = self._parse_rc_file(".requirementsrc")
+        # TODO make [metadata] section with shared=<common>
 
         shared = None
         for section in config.sections():
@@ -47,7 +59,7 @@ class Command(object):
             if shared and section != shared:
                 req_file.write('-r %s.txt\n' % shared)
             for option in config.options(section):
-                req_file.write('%s==%s\n' % (option, config.get(section, option)))
+                req_file.write(self._format_requirements_line(option, config.get(section, option)))
             req_file.close()
 
     def create_rc_file(self, packages):
@@ -55,9 +67,18 @@ class Command(object):
         sections = {'c': 'common', 'd': 'development', 'p': 'production'}
         section_text = 'c(ommon)/d(evelopment)/p(roduction)'
 
-        config = self._get_config_parser()
+        config = self._parse_rc_file(".requirementsrc")
+
         for line in packages.readlines():
             package, version = line.strip().split('==')
+            section, configured_version = self._get_option(config, package)
+            if configured_version:
+                if configured_version != version:
+                    print ("Updating %s version from %s to %s"
+                           % (package, configured_version, version))
+                    config.set(section, package, version)
+                continue
+
             print "Which section should package '%s' go into? %s" % (package, section_text)
             section = ''
             while not section:
