@@ -53,7 +53,7 @@ class Command(object):
 
         try:
             shared = config.get('metadata', 'shared')
-        except ConfigParser.NoOptionError:
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
             shared = None
 
         if not os.path.exists('requirements'):
