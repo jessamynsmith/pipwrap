@@ -111,7 +111,11 @@ class Command(object):
         section_text = ' / '.join(section_text)
 
         package_names = set()
-        for line in packages.readlines():
+        lines = packages.readlines()
+
+        # Since stdin was taken by the input file, reconnect so we can get user input
+        sys.stdin = open('/dev/tty')
+        for line in lines:
             package, version = line.strip().split('==')
             package_names.add(package)
             section, configured_version = self._get_option(config, package)
@@ -128,7 +132,7 @@ class Command(object):
                 section_key = raw_input(prompt)
                 try:
                     section = sections[int(section_key)]
-                except (ValueError, KeyError):
+                except (TypeError, ValueError, KeyError):
                     print "'%s' is not a valid section. %s" % (section_key, section_text)
             self._set_option(config, section, package, version)
 

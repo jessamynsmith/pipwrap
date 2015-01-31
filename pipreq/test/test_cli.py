@@ -15,20 +15,13 @@ class TestCli(unittest.TestCase):
 
         error_message = cli.verify_args(args)
 
-        expected_error = 'Must specify generate (-g) or create (-c) with packages (-p)'
+        expected_error = 'Must specify generate (-g) or create (-c) with packages'
         self.assertEqual(expected_error, error_message)
-
-    def test_verify_args_create_without_packages(self):
-        args = self.parser.parse_args(['-c'])
-
-        error_message = cli.verify_args(args)
-
-        self.assertEqual('Create (-c) requires a list of packages (-p)', error_message)
 
     def test_verify_args_create_with_packages(self):
         package_file = tempfile.NamedTemporaryFile()
 
-        args = self.parser.parse_args(['-c', '-p%s' % package_file.name])
+        args = self.parser.parse_args(['-c', package_file.name])
 
         error_message = cli.verify_args(args)
 
