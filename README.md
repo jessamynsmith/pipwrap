@@ -8,18 +8,16 @@ found yourself sifting through the output of pip freeze trying to figure out wha
 packages you've installed but didn't yet add to one of your requirements files, then
 pipreq is the tool for you.
 
-pipreq can:
+Features
+--------
+
 - Inspect a list of packages and create or update a requirements rc file
 - Generate a set of requirements files from an rc file
 
+[![Build Status](https://travis-ci.org/jessamynsmith/pipreq.svg?branch=master)](https://travis-ci.org/jessamynsmith/pipreq)
 
-.. image:: https://travis-ci.org/jessamynsmith/pipreq.svg?branch=master
-    :target: https://travis-ci.org/jessamynsmith/pipreq
-
-Setup
------
-
-::
+Installation
+------------
 
 The development version can be installed with:
 
@@ -31,8 +29,6 @@ If you are developing locally, your version can be installed from the working di
 
 Usage
 -----
-
-::
 
 pipreq uses an rc file to track requirements. You create a section for each requirements file,
 and (if desired) select one section to be shared. The default configuration is as follows:
@@ -85,10 +81,9 @@ where development.txt and production.txt both include the line "-r common.txt"
 
     pipreq -g
 
+
 Development
 -----
-
-::
 
 Fork the project on github and git clone your fork, e.g.:
 
