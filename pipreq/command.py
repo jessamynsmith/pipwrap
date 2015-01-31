@@ -28,11 +28,14 @@ class Command(object):
         config.read(rc_file)
         return config
 
-    def _set_option(self, config, section, option, value):
+    def _add_section(self, config, section):
         try:
             config.add_section(section)
         except ConfigParser.DuplicateSectionError:
             pass
+
+    def _set_option(self, config, section, option, value):
+        self._add_section(config, section)
         config.set(section, option, value)
 
     def _get_option(self, config, option):
@@ -44,12 +47,15 @@ class Command(object):
         return None, None
 
     def _format_requirements_line(self, package, version):
+        # TODO deal with <, > versions?
         return '%s==%s\n' % (package, version)
 
     def generate_requirements_files(self):
         print "Creating requirements files\n"
 
         config = self._parse_rc_file(".requirementsrc")
+
+        # TODO read in existing files? what about special requirements like urls
 
         try:
             shared = config.get('metadata', 'shared')
@@ -60,9 +66,16 @@ class Command(object):
             os.makedirs('requirements')
 
         for section in config.sections():
+            if section == 'metadata':
+                continue
+
             requirements = {}
             for option in config.options(section):
                 requirements[option] = config.get(section, option)
+
+            if not requirements:
+                # No need to write out an empty file
+                continue
 
             req_file = open('requirements/%s.txt' % section, 'w+')
             if shared and section != shared:
@@ -75,11 +88,27 @@ class Command(object):
         print "Creating rcfile '%s'\n" % ".requirementsrc"
 
         prompt = '> '
-        # TODO make sections configurable
-        sections = {'c': 'common', 'd': 'development', 'p': 'production'}
-        section_text = 'c(ommon)/d(evelopment)/p(roduction)'
 
         config = self._parse_rc_file(".requirementsrc")
+
+        if not config.sections():
+            # Starting from scratch, so create a default rc file
+            config.add_section('metadata')
+            config.set('metadata', 'shared', 'common')
+            config.add_section('common')
+            config.add_section('development')
+            config.add_section('production')
+
+        i = 1
+        sections = {}
+        section_text = []
+        for section in config.sections():
+            if section == 'metadata':
+                continue
+            sections[i] = section
+            section_text.append('%s. %s' % (i, section))
+            i += 1
+        section_text = ' / '.join(section_text)
 
         package_names = set()
         for line in packages.readlines():
@@ -98,8 +127,8 @@ class Command(object):
             while not section:
                 section_key = raw_input(prompt)
                 try:
-                    section = sections[section_key]
-                except KeyError:
+                    section = sections[int(section_key)]
+                except (ValueError, KeyError):
                     print "'%s' is not a valid section. %s" % (section_key, section_text)
             self._set_option(config, section, package, version)
 
