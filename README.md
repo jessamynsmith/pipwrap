@@ -58,10 +58,9 @@ where development.txt and production.txt both include the line "-r common.txt"
 
 1. (Optional) Create an empty .requirementsrc file with your desired metadata and sections
 
-2. Interactively create .requirementsrc file from currently installed packages:
+2. Interactively populate .requirementsrc file from currently installed packages:
 
-    pip freeze > freeze.txt
-    pipreq -c -p freeze.txt
+    pip freeze | pipreq -c
 
 3. Generate requirements files from .requirementsrc file:
 
@@ -74,8 +73,7 @@ where development.txt and production.txt both include the line "-r common.txt"
 
 1. Interactively update .requirementsrc file from currently installed packages:
 
-    pip freeze > freeze.txt
-    pipreq -c -p freeze.txt
+    pip freeze | pipreq -c
 
 2. Re-generate requirements files from .requirementsrc file:
 
