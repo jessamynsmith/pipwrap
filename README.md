@@ -54,7 +54,7 @@ This would result in the following requirements directory structure:
 
 where development.txt and production.txt both include the line "-r common.txt"
 
-** Getting Started with pipreq **
+**Getting Started with pipreq**
 
 1. (Optional) Create an empty .requirementsrc file with your desired metadata and sections
 
@@ -70,7 +70,7 @@ where development.txt and production.txt both include the line "-r common.txt"
 4. Create a top-level requirements.txt file that points to your production requirements, e.g.
 "-r production.txt"
 
-** Keeping requirements up to date with pipreq **
+**Keeping requirements up to date with pipreq**
 
 1. Interactively update .requirementsrc file from currently installed packages:
 
