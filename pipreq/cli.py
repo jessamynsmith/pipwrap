@@ -36,7 +36,7 @@ def main():
         error_message = verify_args(parsed_args)
         if error_message:
             error(parser, error_message)
-        command = Command(parsed_args)
+        command = Command(parsed_args, ".requirementsrc")
         command.run()
     except KeyboardInterrupt:
         sys.exit()

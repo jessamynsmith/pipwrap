@@ -5,104 +5,102 @@ import sys
 
 class Command(object):
 
-    def __init__(self, args):
+    def __init__(self, args, rc_filename):
         self.args = args
+        self.rc_filename = rc_filename
+        self.config = ConfigParser.ConfigParser()
+        # This open is required so that capitalization is kept when writing
+        self.config.optionxform = str
+        self.config.read(rc_filename)
 
-    def print_message(self, message, verbosity_needed=1):
-        """ Prints the message, if verbosity is high enough. """
-        if self.args.verbosity >= verbosity_needed:
-            print message
-
-    def error(self, message, code=1):
-        """ Prints the error, and exits with the given code. """
-        print >>sys.stderr, message
-        sys.exit(code)
-
-    def _get_config_parser(self):
-        config = ConfigParser.ConfigParser()
-        config.optionxform = str
-        return config
-
-    def _parse_rc_file(self, rc_file):
-        config = self._get_config_parser()
-        config.read(rc_file)
-        return config
-
-    def _add_section(self, config, section):
+    def _add_section(self, section):
         try:
-            config.add_section(section)
+            self.config.add_section(section)
         except ConfigParser.DuplicateSectionError:
             pass
 
-    def _set_option(self, config, section, option, value):
-        self._add_section(config, section)
-        config.set(section, option, value)
+    def _set_option(self, section, option, value):
+        self._add_section(section)
+        self.config.set(section, option, value)
 
-    def _get_option(self, config, option):
-        for section in config.sections():
+    def _get_option(self, option):
+        for section in self.config.sections():
             try:
-                return section, config.get(section, option)
+                return section, self.config.get(section, option)
             except ConfigParser.NoOptionError:
                 continue
         return None, None
+
+    def _get_shared_section(self):
+        try:
+            return self.config.get('metadata', 'shared')
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            pass
+        return None
+
+    def _make_requirements_directory(self, base_dir):
+        requirements_dir = os.path.join(base_dir, 'requirements')
+        if not os.path.exists(requirements_dir):
+            os.makedirs(requirements_dir)
+        return requirements_dir
 
     def _format_requirements_line(self, package, version):
         # TODO deal with <, > versions?
         return '%s==%s\n' % (package, version)
 
-    def generate_requirements_files(self):
+    def _write_requirements_file(self, shared, section, requirements, filename):
+        req_file = open(filename, 'w+')
+        if shared and section != shared:
+            req_file.write('-r %s.txt\n' % shared)
+        for package in sorted(requirements.keys()):
+            req_file.write(self._format_requirements_line(package, requirements[package]))
+        req_file.close()
+
+    def generate_requirements_files(self, base_dir='.'):
+        """ Generate set of requirements files for config """
+
         print "Creating requirements files\n"
 
-        config = self._parse_rc_file(".requirementsrc")
+        # TODO How to deal with requirements that are not simple, e.g. a github url
 
-        # TODO read in existing files? what about special requirements like urls
+        shared = self._get_shared_section()
 
-        try:
-            shared = config.get('metadata', 'shared')
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            shared = None
+        requirements_dir = self._make_requirements_directory(base_dir)
 
-        if not os.path.exists('requirements'):
-            os.makedirs('requirements')
-
-        for section in config.sections():
+        for section in self.config.sections():
             if section == 'metadata':
                 continue
 
             requirements = {}
-            for option in config.options(section):
-                requirements[option] = config.get(section, option)
+            for option in self.config.options(section):
+                requirements[option] = self.config.get(section, option)
 
             if not requirements:
                 # No need to write out an empty file
                 continue
 
-            req_file = open('requirements/%s.txt' % section, 'w+')
-            if shared and section != shared:
-                req_file.write('-r %s.txt\n' % shared)
-            for package in sorted(requirements.keys()):
-                req_file.write(self._format_requirements_line(package, requirements[package]))
-            req_file.close()
+            filename = os.path.join(requirements_dir, '%s.txt' % section)
+            self._write_requirements_file(shared, section, requirements, filename)
 
     def create_rc_file(self, packages):
-        print "Creating rcfile '%s'\n" % ".requirementsrc"
+        """ Create a set of requirements files for config """
+
+        print "Creating rcfile '%s'\n" % self.rc_filename
 
         prompt = '> '
 
-        config = self._parse_rc_file(".requirementsrc")
-
-        if not config.sections():
+        if not self.config.sections():
             # Starting from scratch, so create a default rc file
-            config.add_section('metadata')
-            config.set('metadata', 'shared', 'common')
-            config.add_section('common')
-            config.add_section('development')
-            config.add_section('production')
+            self.config.add_section('metadata')
+            self.config.set('metadata', 'shared', 'common')
+            self.config.add_section('common')
+            self.config.add_section('development')
+            self.config.add_section('production')
 
         i = 1
         sections = {}
         section_text = []
-        for section in config.sections():
+        for section in self.config.sections():
             if section == 'metadata':
                 continue
             sections[i] = section
@@ -118,12 +116,12 @@ class Command(object):
         for line in lines:
             package, version = line.strip().split('==')
             package_names.add(package)
-            section, configured_version = self._get_option(config, package)
+            section, configured_version = self._get_option(package)
             if configured_version:
                 if configured_version != version:
                     print ("Updating '%s' version from '%s' to '%s'"
                            % (package, configured_version, version))
-                    config.set(section, package, version)
+                    self.config.set(section, package, version)
                 continue
 
             print "Which section should package '%s' go into? %s" % (package, section_text)
@@ -134,18 +132,18 @@ class Command(object):
                     section = sections[int(section_key)]
                 except (TypeError, ValueError, KeyError):
                     print "'%s' is not a valid section. %s" % (section_key, section_text)
-            self._set_option(config, section, package, version)
+            self._set_option(section, package, version)
 
-        for section in config.sections():
+        for section in self.config.sections():
             if section == 'metadata':
                 continue
-            for option in config.options(section):
+            for option in self.config.options(section):
                 if option not in package_names:
                     print "Removing package '%s'" % option
-                    config.remove_option(section, option)
+                    self.config.remove_option(section, option)
 
-        rc_file = open('.requirementsrc', 'w+')
-        config.write(rc_file)
+        rc_file = open(self.rc_filename, 'w+')
+        self.config.write(rc_file)
         rc_file.close()
 
     def run(self):
