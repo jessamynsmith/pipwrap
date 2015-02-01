@@ -1,12 +1,12 @@
 from setuptools import setup, find_packages
 import os.path as p
 
-with open(p.join(p.dirname(__file__), 'requirements.txt'), 'r') as reqs:
+with open(p.join(p.dirname(__file__), 'requirements', 'package.txt'), 'r') as reqs:
     install_requires = [line.strip() for line in reqs]
 
 tests_require = []
 try:
-    with open(p.join(p.dirname(__file__), 'requirements_test.txt'), 'r') as reqs:
+    with open(p.join(p.dirname(__file__), 'requirements', 'test.txt'), 'r') as reqs:
         tests_require = [line.strip() for line in reqs]
 except IOError:
     pass
