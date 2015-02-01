@@ -90,7 +90,7 @@ Fork the project on github and git clone your fork, e.g.:
 Create a virtualenv and install dependencies:
 
     mkvirtualenv pipreq
-    pip install -r requirements.txt -r requirements_test.txt
+    pip install -r requirements/package.txt -r requirements/test.txt
 
 Run tests and view coverage:
 
