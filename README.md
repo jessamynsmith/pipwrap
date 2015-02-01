@@ -15,6 +15,7 @@ Features
 - Generate a set of requirements files from an rc file
 
 [![Build Status](https://travis-ci.org/jessamynsmith/pipreq.svg?branch=master)](https://travis-ci.org/jessamynsmith/pipreq)
+[![Coverage Status](https://coveralls.io/repos/jessamynsmith/pipreq/badge.svg?branch=master)](https://coveralls.io/r/jessamynsmith/pipreq?branch=master)
 
 Installation
 ------------
