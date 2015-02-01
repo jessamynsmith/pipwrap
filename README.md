@@ -1,6 +1,9 @@
 pipreq
 ======
 
+[![Build Status](https://travis-ci.org/jessamynsmith/pipreq.svg?branch=master)](https://travis-ci.org/jessamynsmith/pipreq)
+[![Coverage Status](https://coveralls.io/repos/jessamynsmith/pipreq/badge.svg?branch=master)](https://coveralls.io/r/jessamynsmith/pipreq?branch=master)
+
 pipreq simplifies handling Python project requirements across multiple environments.
 pip freeze > requirements.txt gets your project started, but do you really want
 mock, coverage, etc. installed on your production server? If, like me, you've ever
@@ -13,9 +16,6 @@ Features
 
 - Inspect a list of packages and create or update a requirements rc file
 - Generate a set of requirements files from an rc file
-
-[![Build Status](https://travis-ci.org/jessamynsmith/pipreq.svg?branch=master)](https://travis-ci.org/jessamynsmith/pipreq)
-[![Coverage Status](https://coveralls.io/repos/jessamynsmith/pipreq/badge.svg?branch=master)](https://coveralls.io/r/jessamynsmith/pipreq?branch=master)
 
 Installation
 ------------
