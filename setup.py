@@ -21,6 +21,7 @@ setup(
     license='MIT',
     description="Manages pip requirements files for multiple environments, e.g. production and "
                 "development",
+    long_description=open('README.rst').read(),
     keywords=['pip', 'requirements', 'heroku', 'development', 'production'],
 
     install_requires=install_requires,
