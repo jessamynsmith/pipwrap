@@ -5,6 +5,12 @@ except ImportError:
 import os
 import sys
 
+# In python 3, raw_input has been renamed to input
+try:
+    input = raw_input
+except NameError:
+    pass
+
 
 class Command(object):
 
