@@ -3,6 +3,9 @@ pipreq
 
 [![Build Status](https://travis-ci.org/jessamynsmith/pipreq.svg?branch=master)](https://travis-ci.org/jessamynsmith/pipreq)
 [![Coverage Status](https://coveralls.io/repos/jessamynsmith/pipreq/badge.svg?branch=master)](https://coveralls.io/r/jessamynsmith/pipreq?branch=master)
+[![Coverage Status](https://pypip.in/version/pipreq/badge.svg)](https://pypi.python.org/pypi/pipreq)
+[![Coverage Status](https://pypip.in/py_versions/pipreq/badge.svg)](https://pypi.python.org/pypi/pipreq)
+[![Coverage Status](https://pypip.in/download/pipreq/badge.svg)](https://pypi.python.org/pypi/pipreq)
 
 pipreq simplifies handling Python project requirements across multiple environments.
 pip freeze > requirements.txt gets your project started, but do you really want
