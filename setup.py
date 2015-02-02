@@ -19,7 +19,8 @@ setup(
     url="https://github.com/jessamynsmith/pipreq",
     download_url='https://github.com/jessamynsmith/pipreq/archive/v0.1.tar.gz',
     license='MIT',
-    description="Manages pip requirements files for multiple environments",
+    description="Manages pip requirements files for multiple environments, e.g. production and "
+                "development",
     keywords=['pip', 'requirements', 'heroku', 'development', 'production'],
 
     install_requires=install_requires,
