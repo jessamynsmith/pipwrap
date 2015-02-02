@@ -9,10 +9,9 @@ pipreq
 
 pipreq simplifies handling Python project requirements across multiple environments.
 pip freeze > requirements.txt gets your project started, but do you really want
-mock, coverage, etc. installed on your production server? If, like me, you've ever
-found yourself sifting through the output of pip freeze trying to figure out what
-packages you've installed but didn't yet add to one of your requirements files, then
-pipreq is the tool for you.
+mock, coverage, etc. installed on your production server? If you've ever found yourself
+sifting through the output of pip freeze trying to figure out what packages you've installed
+but didn't yet add to one of your requirements files, then pipreq is the tool for you.
 
 Features
 --------
