@@ -22,6 +22,12 @@ Features
 Installation
 ------------
 
+You can get pipreq from PyPI with:
+
+::
+
+    pip install pipreq
+
 The development version can be installed with:
 
 ::
