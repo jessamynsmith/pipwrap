@@ -13,11 +13,11 @@ except IOError:
 
 setup(
     name="pipreq",
-    version="0.1",
+    version="0.2",
     author="Jessamyn Smith",
     author_email="jessamyn.smith@gmail.com",
     url="https://github.com/jessamynsmith/pipreq",
-    download_url='https://github.com/jessamynsmith/pipreq/archive/v0.1.tar.gz',
+    download_url='https://github.com/jessamynsmith/pipreq/archive/v0.2.tar.gz',
     license='MIT',
     description="Manages pip requirements files for multiple environments, e.g. production and "
                 "development",
