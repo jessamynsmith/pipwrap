@@ -1,4 +1,7 @@
-import ConfigParser
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 import os
 import sys
 
@@ -8,7 +11,7 @@ class Command(object):
     def __init__(self, args, rc_filename):
         self.args = args
         self.rc_filename = rc_filename
-        self.config = ConfigParser.ConfigParser()
+        self.config = configparser.ConfigParser()
         # This open is required so that capitalization is kept when writing
         self.config.optionxform = str
         self.config.read(rc_filename)
@@ -16,7 +19,7 @@ class Command(object):
     def _add_section(self, section):
         try:
             self.config.add_section(section)
-        except ConfigParser.DuplicateSectionError:
+        except configparser.DuplicateSectionError:
             pass
 
     def _set_option(self, section, option, value):
@@ -27,14 +30,14 @@ class Command(object):
         for section in self.config.sections():
             try:
                 return section, self.config.get(section, option)
-            except ConfigParser.NoOptionError:
+            except configparser.NoOptionError:
                 continue
         return None, None
 
     def _get_shared_section(self):
         try:
             return self.config.get('metadata', 'shared')
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        except (configparser.NoSectionError, configparser.NoOptionError):
             pass
         return None
 
@@ -59,7 +62,7 @@ class Command(object):
     def generate_requirements_files(self, base_dir='.'):
         """ Generate set of requirements files for config """
 
-        print "Creating requirements files\n"
+        print("Creating requirements files\n")
 
         # TODO How to deal with requirements that are not simple, e.g. a github url
 
@@ -82,20 +85,40 @@ class Command(object):
             filename = os.path.join(requirements_dir, '%s.txt' % section)
             self._write_requirements_file(shared, section, requirements, filename)
 
+    def _remap_stdin(self):
+        # Since stdin was taken by the input file, reconnect so we can get user input
+        sys.stdin = open('/dev/tty')
+
+    def _get_section_key(self):
+        prompt = '> '
+        return input(prompt)
+
+    def _get_section(self, package, sections, section_text):
+        print("Which section should package '%s' go into? %s" % (package, section_text))
+        section = ''
+        while not section:
+            section_key = self._get_section_key()
+            try:
+                section = sections[int(section_key)]
+            except (TypeError, ValueError, KeyError):
+                print("'%s' is not a valid section. %s" % (section_key, section_text))
+        return section
+
+    def _write_default_sections(self):
+        """ Starting from scratch, so create a default rc file """
+        self.config.add_section('metadata')
+        self.config.set('metadata', 'shared', 'common')
+        self.config.add_section('common')
+        self.config.add_section('development')
+        self.config.add_section('production')
+
     def create_rc_file(self, packages):
         """ Create a set of requirements files for config """
 
-        print "Creating rcfile '%s'\n" % self.rc_filename
-
-        prompt = '> '
+        print("Creating rcfile '%s'\n" % self.rc_filename)
 
         if not self.config.sections():
-            # Starting from scratch, so create a default rc file
-            self.config.add_section('metadata')
-            self.config.set('metadata', 'shared', 'common')
-            self.config.add_section('common')
-            self.config.add_section('development')
-            self.config.add_section('production')
+            self._write_default_sections()
 
         i = 1
         sections = {}
@@ -111,27 +134,19 @@ class Command(object):
         package_names = set()
         lines = packages.readlines()
 
-        # Since stdin was taken by the input file, reconnect so we can get user input
-        sys.stdin = open('/dev/tty')
+        self._remap_stdin()
         for line in lines:
             package, version = line.strip().split('==')
             package_names.add(package)
             section, configured_version = self._get_option(package)
             if configured_version:
                 if configured_version != version:
-                    print ("Updating '%s' version from '%s' to '%s'"
-                           % (package, configured_version, version))
+                    print("Updating '%s' version from '%s' to '%s'"
+                          % (package, configured_version, version))
                     self.config.set(section, package, version)
                 continue
 
-            print "Which section should package '%s' go into? %s" % (package, section_text)
-            section = ''
-            while not section:
-                section_key = raw_input(prompt)
-                try:
-                    section = sections[int(section_key)]
-                except (TypeError, ValueError, KeyError):
-                    print "'%s' is not a valid section. %s" % (section_key, section_text)
+            section = self._get_section(package, sections, section_text)
             self._set_option(section, package, version)
 
         for section in self.config.sections():
@@ -139,15 +154,15 @@ class Command(object):
                 continue
             for option in self.config.options(section):
                 if option not in package_names:
-                    print "Removing package '%s'" % option
+                    print("Removing package '%s'" % option)
                     self.config.remove_option(section, option)
 
         rc_file = open(self.rc_filename, 'w+')
         self.config.write(rc_file)
         rc_file.close()
 
-    def run(self):
+    def run(self, base_dir='.'):
         if self.args.generate:
-            self.generate_requirements_files()
+            self.generate_requirements_files(base_dir)
         elif self.args.create:
             self.create_rc_file(self.args.packages)

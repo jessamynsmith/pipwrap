@@ -17,6 +17,7 @@ setup(
     author="Jessamyn Smith",
     author_email="jessamyn.smith@gmail.com",
     url="https://github.com/jessamynsmith/pipreq",
+    license='MIT',
     description="Manages pip requirements files for multiple environments",
     keywords=['pip', 'requirements', 'heroku', 'development', 'production'],
 
@@ -36,6 +37,10 @@ setup(
         "Environment :: Console",
         "Intended Audience :: Developers",
         "Programming Language :: Python",
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.2',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
         'License :: OSI Approved :: MIT License',
         "Topic :: Software Development",
         "Topic :: Utilities",

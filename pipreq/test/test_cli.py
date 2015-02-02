@@ -39,3 +39,10 @@ class TestCli(unittest.TestCase):
         cli.error(self.parser, 'An error occurred!')
 
         mock_exit.assert_called_once_with(message='\nERROR: An error occurred!\n')
+
+    def test_main(self):
+        try:
+            cli.main()
+            self.fail("Should fail without arguments")
+        except SystemExit:
+            pass
