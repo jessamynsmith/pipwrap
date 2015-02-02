@@ -10,8 +10,8 @@ install: "pip install -r requirements/test.txt"
 
 # command to run tests
 script:
-    coverage run -m nose
-    flake8
+    - coverage run -m nose
+    - flake8
 
 after_success:
     coveralls
