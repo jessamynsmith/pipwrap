@@ -144,14 +144,16 @@ class Command(object):
         package_names = set()
         lines = packages.readlines()
 
-        line_regex = re.compile('\s*(?P<package>[^=<>]+)(?P<specifier>[=<>]{1,2})(?P<version>\S+)')
+        line_regex = re.compile('(?P<package>[A-Za-z0-9.-]+)'
+                                '(?:(?P<specifier>[=<>]{1,2})(?P<version>\S+))?\Z')
         self._remap_stdin()
         for line in lines:
-            match = line_regex.match(line)
+            match = line_regex.match(line.strip())
             if not match:
                 continue
-            package = match.group('package')
-            version = match.group('version')
+            groups = match.groupdict()
+            package = groups.get('package')
+            version = groups.get('version', '')
             package_names.add(package)
             section, configured_version = self._get_option(package)
             # Package already exists in configuration
