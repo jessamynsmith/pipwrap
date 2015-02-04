@@ -1,5 +1,5 @@
 import os
-from mock import MagicMock
+from mock import MagicMock, patch
 import tempfile
 import unittest
 
@@ -203,3 +203,34 @@ class TestCreateRcFile(unittest.TestCase):
         expected = ['[metadata]\n', 'shared = common\n', '\n', '[development]\n', 'mock = 1.2\n',
                     '\n', '[common]\n', 'Django = \n', 'nose = 1.3\n', '\n']
         self.assertEqual(expected, open(self.populated_command.rc_filename).readlines())
+
+
+class TestUpgrade(unittest.TestCase):
+
+    def setUp(self):
+        self.parser = cli.create_parser()
+        self.rc_file_blank = tempfile.NamedTemporaryFile()
+        self.command = command.Command(self.parser.parse_args([]), self.rc_file_blank.name)
+
+    @patch('subprocess.check_call')
+    def test_upgrade_packages(self, mock_check_call):
+        output_dir = tempfile.mkdtemp()
+        filename = os.path.join(output_dir, 'packages.txt')
+        with open(filename, 'w') as packages:
+            packages.write('-r common.txt\nmock==1.2\nDjango==1.7\nnose==1.3\n')
+        packages = open(filename, 'r')
+
+        self.command.upgrade_packages(packages)
+
+        mock_check_call.assert_called_once_with(['pip', 'install', '-U', 'mock', 'Django', 'nose'])
+
+    @patch('subprocess.check_call')
+    def test_run_upgrade_packages(self, mock_check_call):
+        package_file = tempfile.NamedTemporaryFile()
+        package_file.write(b'mock==1.2\nDjango==1.7\nnose==1.3\n')
+        package_file.seek(0)
+        self.command.args = self.parser.parse_args(['-U', package_file.name])
+
+        self.command.run()
+
+        mock_check_call.assert_called_once_with(['pip', 'install', '-U', 'mock', 'Django', 'nose'])

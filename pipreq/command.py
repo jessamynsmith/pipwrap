@@ -4,6 +4,7 @@ except ImportError:
     import ConfigParser as configparser
 import os
 import re
+import subprocess
 import sys
 
 # In python 3, raw_input has been renamed to input
@@ -14,6 +15,9 @@ except NameError:
 
 
 class Command(object):
+
+    LINE_REGEX = re.compile('(?P<package>[A-Za-z0-9.-]+)'
+                            '(?:(?P<specifier>[=<>]{1,2})(?P<version>\S+))?\Z')
 
     def __init__(self, args, rc_filename):
         self.args = args
@@ -122,6 +126,16 @@ class Command(object):
         self.config.add_section('development')
         self.config.add_section('production')
 
+    def _parse_line(self, line):
+        package = None
+        version = ''
+        match = self.LINE_REGEX.match(line.strip())
+        if match:
+            groups = match.groupdict()
+            package = groups.get('package')
+            version = groups.get('version', '')
+        return package, version
+
     def create_rc_file(self, packages):
         """ Create a set of requirements files for config """
 
@@ -141,19 +155,13 @@ class Command(object):
             i += 1
         section_text = ' / '.join(section_text)
 
+        self._remap_stdin()
         package_names = set()
         lines = packages.readlines()
-
-        line_regex = re.compile('(?P<package>[A-Za-z0-9.-]+)'
-                                '(?:(?P<specifier>[=<>]{1,2})(?P<version>\S+))?\Z')
-        self._remap_stdin()
         for line in lines:
-            match = line_regex.match(line.strip())
-            if not match:
+            package, version = self._parse_line(line)
+            if not package:
                 continue
-            groups = match.groupdict()
-            package = groups.get('package')
-            version = groups.get('version', '')
             package_names.add(package)
             section, configured_version = self._get_option(package)
             # Package already exists in configuration
@@ -181,8 +189,30 @@ class Command(object):
         self.config.write(rc_file)
         rc_file.close()
 
+    def upgrade_packages(self, packages):
+        """ Upgrade all specified packages to latest version """
+
+        print("Upgrading packages\n")
+
+        package_list = []
+        lines = packages.readlines()
+        for line in lines:
+            package, version = self._parse_line(line)
+            if package:
+                package_list.append(package)
+
+        args = [
+            "pip",
+            "install",
+            "-U",
+        ]
+        args.extend(package_list)
+        subprocess.check_call(args)
+
     def run(self, base_dir='.'):
         if self.args.generate:
             self.generate_requirements_files(base_dir)
         elif self.args.create:
             self.create_rc_file(self.args.packages)
+        elif self.args.upgrade:
+            self.upgrade_packages(self.args.packages)

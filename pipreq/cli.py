@@ -13,14 +13,16 @@ def create_parser():
                         help='Generate requirements files')
     parser.add_argument('-c', '--create', action='store_true', default=False,
                         help='Create or update rc file (requires list of packages)')
+    parser.add_argument('-U', '--upgrade', action='store_true', default=False,
+                        help='Upgrade packages (requires list of packages)')
     parser.add_argument('packages', nargs='?', type=argparse.FileType('r'), default=sys.stdin)
 
     return parser
 
 
 def verify_args(args):
-    if not args.create and not args.generate:
-        return 'Must specify generate (-g) or create (-c) with packages'
+    if not args.create and not args.generate and not args.upgrade:
+        return u'Must specify generate (-g) or create/upgrade (-[cu]) with packages'
     return None
 
 

@@ -15,7 +15,7 @@ class TestCli(unittest.TestCase):
 
         error_message = cli.verify_args(args)
 
-        expected_error = 'Must specify generate (-g) or create (-c) with packages'
+        expected_error = 'Must specify generate (-g) or create/upgrade (-[cu]) with packages'
         self.assertEqual(expected_error, error_message)
 
     def test_verify_args_create_with_packages(self):
