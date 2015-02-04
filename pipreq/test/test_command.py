@@ -15,7 +15,7 @@ class TestCommand(unittest.TestCase):
 
         self.rc_file = tempfile.NamedTemporaryFile()
         self.rc_file.write(b'[metadata]\nshared=common\n[development]\nmock=1.0\n'
-                           b'[common]\nDjango=1.7\npsycopg2=2.5.4\n')
+                           b'[common]\nDjango=1.7\npsycopg2=\n')
         self.rc_file.flush()
         self.populated_command = command.Command(self.parser.parse_args([]), self.rc_file.name)
 
@@ -29,7 +29,7 @@ class TestCommand(unittest.TestCase):
         with open(filename, 'w') as output:
             self.populated_command.config.write(output)
         expected = ('[metadata]\nshared = common\n\n[development]\nmock = 1.0\n\n'
-                    '[common]\nDjango = 1.7\npsycopg2 = 2.5.4\n\n')
+                    '[common]\nDjango = 1.7\npsycopg2 = \n\n')
         with open(filename, 'r') as output:
             self.assertEqual(expected, open(output.name).read())
 
@@ -123,7 +123,7 @@ class TestCommand(unittest.TestCase):
 
         self.assertTrue(os.path.exists(os.path.join(tempdir, 'requirements')))
         common_reqs = open(os.path.join(tempdir, 'requirements', 'common.txt'))
-        self.assertEqual('Django==1.7\npsycopg2==2.5.4\n', common_reqs.read())
+        self.assertEqual('Django==1.7\npsycopg2\n', common_reqs.read())
         dev_reqs = open(os.path.join(tempdir, 'requirements', 'development.txt'))
         self.assertEqual('-r common.txt\nmock==1.0\n', dev_reqs.read())
 
@@ -135,7 +135,7 @@ class TestCommand(unittest.TestCase):
 
         self.assertTrue(os.path.exists(os.path.join(tempdir, 'requirements')))
         common_reqs = open(os.path.join(tempdir, 'requirements', 'common.txt'))
-        self.assertEqual('Django==1.7\npsycopg2==2.5.4\n', common_reqs.read())
+        self.assertEqual('Django==1.7\npsycopg2\n', common_reqs.read())
         dev_reqs = open(os.path.join(tempdir, 'requirements', 'development.txt'))
         self.assertEqual('-r common.txt\nmock==1.0\n', dev_reqs.read())
 
@@ -150,7 +150,7 @@ class TestCreateRcFile(unittest.TestCase):
 
         self.rc_file = tempfile.NamedTemporaryFile()
         self.rc_file.write(b'[metadata]\nshared=common\n[development]\nmock=1.0\n'
-                           b'[common]\nDjango=1.7\npsycopg2=2.5.4\n')
+                           b'[common]\nDjango=\npsycopg2=2.5.4\n')
         self.rc_file.flush()
         self.populated_command = command.Command(self.parser.parse_args([]), self.rc_file.name)
         self.populated_command._remap_stdin = MagicMock()
@@ -183,13 +183,13 @@ class TestCreateRcFile(unittest.TestCase):
         output_dir = tempfile.mkdtemp()
         filename = os.path.join(output_dir, 'packages.txt')
         with open(filename, 'w') as packages:
-            packages.write('mock==1.2\nDjango==1.7\nnose==1.3\n')
+            packages.write('-r common.txt\nmock==1.2\nDjango==1.7\nnose==1.3\n')
         packages = open(filename, 'r')
 
         self.populated_command.create_rc_file(packages)
 
         expected = ['[metadata]\n', 'shared = common\n', '\n', '[development]\n', 'mock = 1.2\n',
-                    '\n', '[common]\n', 'Django = 1.7\n', 'nose = 1.3\n', '\n']
+                    '\n', '[common]\n', 'Django = \n', 'nose = 1.3\n', '\n']
         self.assertEqual(expected, open(self.populated_command.rc_filename).readlines())
 
     def test_run_create_rc_file(self):
@@ -201,5 +201,5 @@ class TestCreateRcFile(unittest.TestCase):
         self.populated_command.run()
 
         expected = ['[metadata]\n', 'shared = common\n', '\n', '[development]\n', 'mock = 1.2\n',
-                    '\n', '[common]\n', 'Django = 1.7\n', 'nose = 1.3\n', '\n']
+                    '\n', '[common]\n', 'Django = \n', 'nose = 1.3\n', '\n']
         self.assertEqual(expected, open(self.populated_command.rc_filename).readlines())

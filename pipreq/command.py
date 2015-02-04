@@ -3,6 +3,7 @@ try:
 except ImportError:
     import ConfigParser as configparser
 import os
+import re
 import sys
 
 # In python 3, raw_input has been renamed to input
@@ -55,7 +56,10 @@ class Command(object):
 
     def _format_requirements_line(self, package, version):
         # TODO deal with <, > versions?
-        return '%s==%s\n' % (package, version)
+        version_spec = ''
+        if version:
+            version_spec = '==%s' % version
+        return '%s%s\n' % (package, version_spec)
 
     def _write_requirements_file(self, shared, section, requirements, filename):
         req_file = open(filename, 'w+')
@@ -140,16 +144,24 @@ class Command(object):
         package_names = set()
         lines = packages.readlines()
 
+        line_regex = re.compile('\s*(?P<package>[^=<>]+)(?P<specifier>[=<>]{1,2})(?P<version>\S+)')
         self._remap_stdin()
         for line in lines:
-            package, version = line.strip().split('==')
+            match = line_regex.match(line)
+            if not match:
+                continue
+            package = match.group('package')
+            version = match.group('version')
             package_names.add(package)
             section, configured_version = self._get_option(package)
-            if configured_version:
-                if configured_version != version:
-                    print("Updating '%s' version from '%s' to '%s'"
-                          % (package, configured_version, version))
-                    self.config.set(section, package, version)
+            # Package already exists in configuration
+            if section:
+                # If there is a configured version, update it. If not, leave it unversioned.
+                if configured_version:
+                    if configured_version != version:
+                        print("Updating '%s' version from '%s' to '%s'"
+                              % (package, configured_version, version))
+                        self.config.set(section, package, version)
                 continue
 
             section = self._get_section(package, sections, section_text)
