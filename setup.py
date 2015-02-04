@@ -13,16 +13,16 @@ except IOError:
 
 setup(
     name="pipreq",
-    version="0.2",
+    version="0.3",
     author="Jessamyn Smith",
     author_email="jessamyn.smith@gmail.com",
     url="https://github.com/jessamynsmith/pipreq",
-    download_url='https://github.com/jessamynsmith/pipreq/archive/v0.2.tar.gz',
+    download_url='https://github.com/jessamynsmith/pipreq/archive/v0.3.tar.gz',
     license='MIT',
     description="Manages pip requirements files for multiple environments, e.g. production and "
                 "development",
     long_description=open('README.rst').read(),
-    keywords=['pip', 'requirements', 'heroku', 'development', 'production'],
+    keywords=['pip', 'upgrade', 'requirements', 'heroku', 'development', 'production'],
 
     install_requires=install_requires,
     tests_require=tests_require,
@@ -36,7 +36,7 @@ setup(
     },
 
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 3 - Beta",
         "Environment :: Console",
         "Intended Audience :: Developers",
         "Programming Language :: Python",

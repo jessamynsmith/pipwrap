@@ -1,23 +1,23 @@
 pipreq
 ======
 
-|Build Status| |Coverage Status| |PyPI Version| |Supported Versions|
-|Downloads|
+|Build Status| |Coverage Status| |PyPI Version| |Supported Versions| |Downloads|
 
 pipreq simplifies handling Python project requirements across multiple
 environments. pip freeze > requirements.txt gets your project started,
 but do you really want mock, coverage, etc. installed on your production
-server? If you've ever found yourself sifting through the output of pip
-freeze trying to figure out what packages you've installed but didn't
-yet add to one of your requirements files, then pipreq is the tool for
-you.
+server? Maybe you want to upgrade all your test requirements, but not your
+production requirements. If you've ever found yourself sifting through the
+output of pip freeze trying to figure out what packages you've installed
+but didn't yet add to one of your requirements files, then pipreq is the
+tool for you.
 
 Features
 --------
 
--  Inspect a list of packages and create or update a requirements rc
-   file
+-  Inspect a list of packages and create or update a requirements rc file
 -  Generate a set of requirements files from an rc file
+-  Upgrade all specified packages to the latest versions
 
 Installation
 ------------
