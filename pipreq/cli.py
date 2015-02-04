@@ -22,7 +22,7 @@ def create_parser():
 
 def verify_args(args):
     if not args.create and not args.generate and not args.upgrade:
-        return u'Must specify generate (-g) or create/upgrade (-[cu]) with packages'
+        return 'Must specify generate (-g) or create/upgrade (-[cu]) with packages'
     return None
 
 
