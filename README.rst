@@ -100,6 +100,10 @@ common.txt"
 
    pipreq -g
 
+3. Upgrade all packages to latest available versions:
+
+   cat requirements/development | pipreq -U
+
 Development
 -----------
 
