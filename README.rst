@@ -107,7 +107,7 @@ common.txt"
 
 3. Remove stray packages in virtualenv:
 
-   cat requirements/*.txt | pipreq -x
+   cat requirements/\*.txt | pipreq -x
 
 Development
 -----------
