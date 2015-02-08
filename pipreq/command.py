@@ -141,18 +141,18 @@ class Command(object):
 
         print("Creating rcfile '%s'\n" % self.rc_filename)
 
+        # TODO bug with == in config file
+
         if not self.config.sections():
             self._write_default_sections()
 
-        i = 1
         sections = {}
         section_text = []
-        for section in self.config.sections():
+        for i, section in enumerate(self.config.sections()):
             if section == 'metadata':
                 continue
             sections[i] = section
             section_text.append('%s. %s' % (i, section))
-            i += 1
         section_text = ' / '.join(section_text)
 
         self._remap_stdin()
@@ -201,13 +201,49 @@ class Command(object):
             if package:
                 package_list.append(package)
 
+        if package_list:
+            args = [
+                "pip",
+                "install",
+                "-U",
+            ]
+            args.extend(package_list)
+            subprocess.check_call(args)
+        else:
+            print("No packages to upgrade")
+
+    def remove_extra_packages(self, packages):
+        """ Remove all packages missing from list """
+
+        print("Removing packages\n")
+
         args = [
             "pip",
-            "install",
-            "-U",
+            "freeze",
         ]
-        args.extend(package_list)
-        subprocess.check_call(args)
+        installed = subprocess.check_output(args, universal_newlines=True)
+
+        installed_list = set()
+        for line in installed.strip().split('\n'):
+            package, version = self._parse_line(line)
+            installed_list.add(package)
+
+        package_list = set()
+        for line in packages.readlines():
+            package, version = self._parse_line(line)
+            package_list.add(package)
+
+        removal_list = installed_list - package_list
+        if removal_list:
+            args = [
+                "pip",
+                "uninstall",
+                "-y",
+            ]
+            args.extend(list(removal_list))
+            subprocess.check_call(args)
+        else:
+            print("No packages to be removed")
 
     def run(self, base_dir='.'):
         if self.args.generate:
@@ -216,3 +252,5 @@ class Command(object):
             self.create_rc_file(self.args.packages)
         elif self.args.upgrade:
             self.upgrade_packages(self.args.packages)
+        elif self.args.remove_extra:
+            self.remove_extra_packages(self.args.packages)

@@ -18,6 +18,7 @@ Features
 -  Inspect a list of packages and create or update a requirements rc file
 -  Generate a set of requirements files from an rc file
 -  Upgrade all specified packages to the latest versions
+-  Remove stray packages in virtualenv
 
 Installation
 ------------
@@ -102,7 +103,11 @@ common.txt"
 
 3. Upgrade all packages to latest available versions:
 
-   cat requirements/development | pipreq -U
+   cat requirements/development.txt | pipreq -U
+
+3. Remove stray packages in virtualenv:
+
+   cat requirements/*.txt | pipreq -x
 
 Development
 -----------

@@ -1,4 +1,5 @@
 from mock import patch
+import sys
 import tempfile
 import unittest
 
@@ -15,7 +16,8 @@ class TestCli(unittest.TestCase):
 
         error_message = cli.verify_args(args)
 
-        expected_error = 'Must specify generate (-g) or create/upgrade (-[cu]) with packages'
+        expected_error = ('Must specify generate (-g) or create/upgrade/remove-missing (-[cur]) '
+                          'with packages')
         self.assertEqual(expected_error, error_message)
 
     def test_verify_args_create_with_packages(self):
@@ -40,9 +42,26 @@ class TestCli(unittest.TestCase):
 
         mock_exit.assert_called_once_with(message='\nERROR: An error occurred!\n')
 
-    def test_main(self):
+    def test_main_no_args(self):
         try:
             cli.main()
             self.fail("Should fail without arguments")
-        except SystemExit:
-            pass
+        except SystemExit as e:
+            self.assertEqual('0', str(e))
+
+    def test_main_invalid_args(self):
+        sys.argv = ['pipreq', '-c', '-g']
+
+        try:
+            cli.main()
+            self.fail("Should fail with invalid argument")
+        except SystemExit as e:
+            self.assertEqual('0', str(e))
+
+    def test_main_success(self):
+        _, packages = tempfile.mkstemp()
+        sys.argv = ['pipreq', '-U', packages]
+
+        result = cli.main()
+
+        self.assertEqual(0, result)
