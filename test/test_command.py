@@ -147,6 +147,19 @@ class TestCommand(unittest.TestCase):
         dev_reqs = open(os.path.join(tempdir, 'requirements', 'development.txt'))
         self.assertEqual('-r common.txt\nmock==1.0\n', dev_reqs.read())
 
+    def test_parse_requirements_empty(self):
+        self.assertEqual((), self.blank_command._parse_requirements(""))
+
+    def test_parse_requirements_non_empty(self):
+        input = ("unicorn==19.1.1", "dragon==2.0")
+        expected = (("unicorn", "19.1.1"), ("dragon", "2.0"))
+        self.assertEqual(expected, self.blank_command._parse_requirements(input))
+
+    def test_parse_requirements_with_non_matching_lines(self):
+        input = ("-r common.txt", "unicorn==19.1.1", "-e http://example.com/some-repo.git")
+        expected = (("unicorn", "19.1.1"),)
+        self.assertEqual(expected, self.blank_command._parse_requirements(input))
+
 
 class TestCreateRcFile(unittest.TestCase):
 
