@@ -16,7 +16,7 @@ class TestCli(unittest.TestCase):
 
         error_message = cli.verify_args(args)
 
-        expected_error = ('Must specify generate (-g) or create/upgrade/remove-missing (-[cur]) '
+        expected_error = ('Must specify generate (-g) or create/upgrade/remove-missing (-[cux]) '
                           'with packages')
         self.assertEqual(expected_error, error_message)
 

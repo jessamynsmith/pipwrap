@@ -29,7 +29,7 @@ def verify_args(args):
     has_one_option = (bool(args.create) ^ bool(args.generate) ^ bool(args.upgrade)
                       ^ bool(args.remove_extra))
     if not has_one_option:
-        return 'Must specify generate (-g) or create/upgrade/remove-missing (-[cur]) with packages'
+        return 'Must specify generate (-g) or create/upgrade/remove-missing (-[cux]) with packages'
     return None
 
 
