@@ -280,7 +280,9 @@ class TestRemoveExtra(unittest.TestCase):
     @patch('subprocess.check_call')
     def test_remove_extra_packages_with_dashe_directive(self, mock_check_call, mock_check_output):
         mock_check_output.return_value = \
-            'mock==1.2\nDjango==1.7\nnose==1.3\n-e http://example.com/some-repo.git\ndjango-nose==1.0\n'
+            'mock==1.2\nDjango==1.7\nnose==1.3\n ' \
+            '-e http://example.com/some-repo.git ' \
+            '\ndjango-nose==1.0\n'
         packages = _create_packages('mock==1.2\nDjango==1.7\nnose==1.3\n')
 
         self.command.remove_extra_packages(packages)
