@@ -20,6 +20,9 @@ def create_parser():
                         help='Upgrade packages (requires list of packages)')
     parser.add_argument('-x', '--remove-extra', action='store_true', default=False,
                         help='Remove packages not in list (requires list of packages)')
+    parser.add_argument('-n', '--dry-run', action='store_true', default=False,
+                        help='Don\'t actually make any changes; '
+                             'only show what would have been done')
     parser.add_argument('packages', nargs='?', type=argparse.FileType('r'), default=sys.stdin)
 
     return parser

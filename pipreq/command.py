@@ -225,10 +225,9 @@ class Command(object):
         else:
             print("No packages to upgrade")
 
-    def remove_extra_packages(self, packages):
-        """ Remove all packages missing from list """
-
-        print("Removing packages\n")
+    def determine_extra_packages(self, packages):
+        """ Return a packages that are installed, but missing from "packages".
+            Return value is a tuple of the package names """
 
         args = [
             "pip",
@@ -246,16 +245,27 @@ class Command(object):
             package_list.add(package)
 
         removal_list = installed_list - package_list
-        if removal_list:
-            args = [
-                "pip",
-                "uninstall",
-                "-y",
-            ]
-            args.extend(list(removal_list))
-            subprocess.check_call(args)
-        else:
+        return tuple(removal_list)
+
+    def remove_extra_packages(self, packages, dry_run=False):
+        """ Remove all packages missing from list """
+
+        removal_list = self.determine_extra_packages(packages)
+        if not removal_list:
             print("No packages to be removed")
+        else:
+            if dry_run:
+                print("The following packages would be removed:\n    %s\n" %
+                      "\n    ".join(removal_list))
+            else:
+                print("Removing packages\n")
+                args = [
+                    "pip",
+                    "uninstall",
+                    "-y",
+                ]
+                args.extend(list(removal_list))
+                subprocess.check_call(args)
 
     def run(self, base_dir='.'):
         if self.args.generate:
@@ -265,4 +275,4 @@ class Command(object):
         elif self.args.upgrade:
             self.upgrade_packages(self.args.packages)
         elif self.args.remove_extra:
-            self.remove_extra_packages(self.args.packages)
+            self.remove_extra_packages(self.args.packages, self.args.dry_run)
