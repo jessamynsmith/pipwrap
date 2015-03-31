@@ -33,6 +33,8 @@ def verify_args(args):
                       ^ bool(args.remove_extra))
     if not has_one_option:
         return 'Must specify generate (-g) or create/upgrade/remove-missing (-[cux]) with packages'
+    if args.dry_run and not args.remove_extra:
+        return '-n is only supported with -x'
     return None
 
 
