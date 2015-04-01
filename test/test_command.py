@@ -6,11 +6,11 @@ import unittest
 from pipreq import cli, command
 
 
-def _create_packages():
+def _create_packages(content='-r common.txt\nmock==1.2\nDjango==1.7\nnose==1.3\n'):
     output_dir = tempfile.mkdtemp()
     filename = os.path.join(output_dir, 'packages.txt')
     with open(filename, 'w') as packages:
-        packages.write('-r common.txt\nmock==1.2\nDjango==1.7\nnose==1.3\n')
+        packages.write(content)
     return open(filename, 'r')
 
 
@@ -147,6 +147,19 @@ class TestCommand(unittest.TestCase):
         dev_reqs = open(os.path.join(tempdir, 'requirements', 'development.txt'))
         self.assertEqual('-r common.txt\nmock==1.0\n', dev_reqs.read())
 
+    def test_parse_requirements_empty(self):
+        self.assertEqual((), self.blank_command._parse_requirements(""))
+
+    def test_parse_requirements_non_empty(self):
+        input = ("unicorn==19.1.1", "dragon==2.0")
+        expected = (("unicorn", "19.1.1"), ("dragon", "2.0"))
+        self.assertEqual(expected, self.blank_command._parse_requirements(input))
+
+    def test_parse_requirements_with_non_matching_lines(self):
+        input = ("-r common.txt", "unicorn==19.1.1", "-e http://example.com/some-repo.git")
+        expected = (("unicorn", "19.1.1"),)
+        self.assertEqual(expected, self.blank_command._parse_requirements(input))
+
 
 class TestCreateRcFile(unittest.TestCase):
 
@@ -258,6 +271,19 @@ class TestRemoveExtra(unittest.TestCase):
     def test_remove_extra_packages(self, mock_check_call, mock_check_output):
         mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\ndjango-nose==1.0\n'
         packages = _create_packages()
+
+        self.command.remove_extra_packages(packages)
+
+        mock_check_call.assert_called_once_with(['pip', 'uninstall', '-y', 'django-nose'])
+
+    @patch('subprocess.check_output')
+    @patch('subprocess.check_call')
+    def test_remove_extra_packages_with_dashe_directive(self, mock_check_call, mock_check_output):
+        mock_check_output.return_value = \
+            'mock==1.2\nDjango==1.7\nnose==1.3\n ' \
+            '-e http://example.com/some-repo.git ' \
+            '\ndjango-nose==1.0\n'
+        packages = _create_packages('mock==1.2\nDjango==1.7\nnose==1.3\n')
 
         self.command.remove_extra_packages(packages)
 

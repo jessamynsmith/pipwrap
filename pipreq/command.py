@@ -126,6 +126,23 @@ class Command(object):
         self.config.add_section('development')
         self.config.add_section('production')
 
+    def _parse_requirements(self, input):
+        """ Parse a list of requirements specifications.
+            Lines that look like "foobar==1.0" are parsed; all other lines are
+            silently ignored.
+
+            Returns a tuple of tuples, where each inner tuple is:
+                (package, version) """
+
+        results = []
+
+        for line in input:
+            (package, version) = self._parse_line(line)
+            if package:
+                results.append((package, version))
+
+        return tuple(results)
+
     def _parse_line(self, line):
         package = None
         version = ''
@@ -158,10 +175,8 @@ class Command(object):
         self._remap_stdin()
         package_names = set()
         lines = packages.readlines()
-        for line in lines:
-            package, version = self._parse_line(line)
-            if not package:
-                continue
+        requirements = self._parse_requirements(lines)
+        for (package, version) in requirements:
             package_names.add(package)
             section, configured_version = self._get_option(package)
             # Package already exists in configuration
@@ -195,11 +210,9 @@ class Command(object):
         print("Upgrading packages\n")
 
         package_list = []
-        lines = packages.readlines()
-        for line in lines:
-            package, version = self._parse_line(line)
-            if package:
-                package_list.append(package)
+        requirements = self._parse_requirements(packages.readlines())
+        for (package, version) in requirements:
+            package_list.append(package)
 
         if package_list:
             args = [
@@ -224,13 +237,12 @@ class Command(object):
         installed = subprocess.check_output(args, universal_newlines=True)
 
         installed_list = set()
-        for line in installed.strip().split('\n'):
-            package, version = self._parse_line(line)
+        lines = installed.strip().split('\n')
+        for (package, version) in self._parse_requirements(lines):
             installed_list.add(package)
 
         package_list = set()
-        for line in packages.readlines():
-            package, version = self._parse_line(line)
+        for (package, version) in self._parse_requirements(packages.readlines()):
             package_list.add(package)
 
         removal_list = installed_list - package_list
