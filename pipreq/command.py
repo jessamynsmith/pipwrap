@@ -226,7 +226,7 @@ class Command(object):
             print("No packages to upgrade")
 
     def determine_extra_packages(self, packages):
-        """ Return a packages that are installed, but missing from "packages".
+        """ Return all packages that are installed, but missing from "packages".
             Return value is a tuple of the package names """
 
         args = [
