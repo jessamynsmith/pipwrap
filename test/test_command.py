@@ -262,8 +262,9 @@ class TestDetermineExtra(unittest.TestCase):
         mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\n'
         packages = _create_packages()
 
-        self.assertEqual((), self.command.determine_extra_packages(packages))
+        extras = self.command.determine_extra_packages(packages)
 
+        self.assertEqual((), extras)
         self.assertFalse(mock_check_call.called)
 
     @patch('subprocess.check_output')
@@ -272,8 +273,9 @@ class TestDetermineExtra(unittest.TestCase):
         mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\ndjango-nose==1.0\n'
         packages = _create_packages()
 
-        self.assertEqual(("django-nose",), self.command.determine_extra_packages(packages))
+        extras = self.command.determine_extra_packages(packages)
 
+        self.assertEqual(("django-nose",), extras)
         self.assertFalse(mock_check_call.called)
 
     @patch('subprocess.check_output')
@@ -286,8 +288,9 @@ class TestDetermineExtra(unittest.TestCase):
             'django-nose==1.0\n'
         packages = _create_packages('mock==1.2\nDjango==1.7\nnose==1.3\n')
 
-        self.assertEqual(("django-nose",), self.command.determine_extra_packages(packages))
+        extras = self.command.determine_extra_packages(packages)
 
+        self.assertEqual(("django-nose",), extras)
         self.assertFalse(mock_check_call.called)
 
 
