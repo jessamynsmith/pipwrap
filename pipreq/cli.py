@@ -20,6 +20,9 @@ def create_parser():
                         help='Upgrade packages (requires list of packages)')
     parser.add_argument('-x', '--remove-extra', action='store_true', default=False,
                         help='Remove packages not in list (requires list of packages)')
+    parser.add_argument('-n', '--dry-run', action='store_true', default=False,
+                        help='Don\'t actually make any changes; '
+                             'only show what would have been done')
     parser.add_argument('packages', nargs='?', type=argparse.FileType('r'), default=sys.stdin)
 
     return parser
@@ -30,6 +33,8 @@ def verify_args(args):
                       ^ bool(args.remove_extra))
     if not has_one_option:
         return 'Must specify generate (-g) or create/upgrade/remove-missing (-[cUx]) with packages'
+    if args.dry_run and not args.remove_extra:
+        return '-n is only supported with -x'
     return None
 
 

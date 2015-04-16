@@ -1,4 +1,5 @@
 import os
+import sys
 from mock import MagicMock, patch
 import tempfile
 import unittest
@@ -249,6 +250,50 @@ class TestUpgrade(unittest.TestCase):
         mock_check_call.assert_called_once_with(['pip', 'install', '-U', 'mock', 'Django', 'nose'])
 
 
+class TestDetermineExtra(unittest.TestCase):
+    def setUp(self):
+        self.parser = cli.create_parser()
+        self.rc_file_blank = tempfile.NamedTemporaryFile()
+        self.command = command.Command(self.parser.parse_args([]), self.rc_file_blank.name)
+
+    @patch('subprocess.check_output')
+    @patch('subprocess.check_call')
+    def test_determine_extra_packages_no_discrepancies(self, mock_check_call, mock_check_output):
+        mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\n'
+        packages = _create_packages()
+
+        extras = self.command.determine_extra_packages(packages)
+
+        self.assertEqual((), extras)
+        self.assertFalse(mock_check_call.called)
+
+    @patch('subprocess.check_output')
+    @patch('subprocess.check_call')
+    def test_determine_extra_packages(self, mock_check_call, mock_check_output):
+        mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\ndjango-nose==1.0\n'
+        packages = _create_packages()
+
+        extras = self.command.determine_extra_packages(packages)
+
+        self.assertEqual(("django-nose",), extras)
+        self.assertFalse(mock_check_call.called)
+
+    @patch('subprocess.check_output')
+    @patch('subprocess.check_call')
+    def test_determine_extra_packages_with_dashe_directive(self,
+                                                           mock_check_call, mock_check_output):
+        mock_check_output.return_value = \
+            'mock==1.2\nDjango==1.7\nnose==1.3\n' \
+            '-e http://example.com/some-repo.git\n' \
+            'django-nose==1.0\n'
+        packages = _create_packages('mock==1.2\nDjango==1.7\nnose==1.3\n')
+
+        extras = self.command.determine_extra_packages(packages)
+
+        self.assertEqual(("django-nose",), extras)
+        self.assertFalse(mock_check_call.called)
+
+
 class TestRemoveExtra(unittest.TestCase):
 
     def setUp(self):
@@ -258,7 +303,7 @@ class TestRemoveExtra(unittest.TestCase):
 
     @patch('subprocess.check_output')
     @patch('subprocess.check_call')
-    def test_remove_extra_packages_no_discrepancies(self, mock_check_call, mock_check_output):
+    def test_remove_extra_packages_when_none_to_remove(self, mock_check_call, mock_check_output):
         mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\n'
         packages = _create_packages()
 
@@ -268,7 +313,7 @@ class TestRemoveExtra(unittest.TestCase):
 
     @patch('subprocess.check_output')
     @patch('subprocess.check_call')
-    def test_remove_extra_packages(self, mock_check_call, mock_check_output):
+    def test_remove_extra_packages_when_some_to_remove(self, mock_check_call, mock_check_output):
         mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\ndjango-nose==1.0\n'
         packages = _create_packages()
 
@@ -278,16 +323,18 @@ class TestRemoveExtra(unittest.TestCase):
 
     @patch('subprocess.check_output')
     @patch('subprocess.check_call')
-    def test_remove_extra_packages_with_dashe_directive(self, mock_check_call, mock_check_output):
-        mock_check_output.return_value = \
-            'mock==1.2\nDjango==1.7\nnose==1.3\n ' \
-            '-e http://example.com/some-repo.git\n ' \
-            'django-nose==1.0\n'
-        packages = _create_packages('mock==1.2\nDjango==1.7\nnose==1.3\n')
+    def test_run_remove_extra_packages_dry_run(self, mock_check_call, mock_check_output):
+        mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\ndjango-nose==1.0\n'
+        package_file = tempfile.NamedTemporaryFile()
+        package_file.write(b'mock==1.2\nDjango==1.7\nnose==1.3\n')
+        package_file.seek(0)
+        self.command.args = self.parser.parse_args(['-xn', package_file.name])
 
-        self.command.remove_extra_packages(packages)
+        self.command.run()
 
-        mock_check_call.assert_called_once_with(['pip', 'uninstall', '-y', 'django-nose'])
+        expected = "The following packages would be removed:\n    django-nose"
+        self.assertEqual(expected, sys.stdout.getvalue().strip())
+        self.assertFalse(mock_check_call.called)
 
     @patch('subprocess.check_output')
     @patch('subprocess.check_call')
