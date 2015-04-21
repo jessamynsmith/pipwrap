@@ -144,8 +144,8 @@ Install your local copy:
 
     python setup.py.install
 
-.. |Build Status| image:: https://travis-ci.org/jessamynsmith/pipreq.svg?branch=master
-   :target: https://travis-ci.org/jessamynsmith/pipreq
+.. |Build Status| image:: https://circleci.com/gh/jessamynsmith/pipreq.svg?style=shield
+   :target: https://circleci.com/gh/jessamynsmith/pipreq
 .. |Coverage Status| image:: https://coveralls.io/repos/jessamynsmith/pipreq/badge.svg?branch=master
    :target: https://coveralls.io/r/jessamynsmith/pipreq?branch=master
 .. |PyPI Version| image:: https://pypip.in/version/pipreq/badge.svg
