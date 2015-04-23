@@ -132,6 +132,12 @@ Run tests and view coverage:
     coverage run -m nose
     coverage report
 
+Verify all supported Python versions:
+
+::
+
+    tox
+
 Check code style:
 
 ::
