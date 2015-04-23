@@ -39,8 +39,8 @@ def verify_args(args):
 
 
 def error(parser, message):
-        parser.print_help()
-        parser.exit(message="\nERROR: %s\n" % message)
+    parser.print_help()
+    parser.exit(message="\nERROR: %s\n" % message)
 
 
 def main():
