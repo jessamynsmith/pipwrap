@@ -1,6 +1,8 @@
 from setuptools import setup, find_packages
 import os.path as p
 
+version = '0.4.4'
+
 with open(p.join(p.dirname(__file__), 'requirements', 'package.txt'), 'r') as reqs:
     install_requires = [line.strip() for line in reqs]
 
@@ -13,11 +15,11 @@ except IOError:
 
 setup(
     name="pipreq",
-    version="0.4",
+    version=version,
     author="Jessamyn Smith",
     author_email="jessamyn.smith@gmail.com",
     url="https://github.com/jessamynsmith/pipreq",
-    download_url='https://github.com/jessamynsmith/pipreq/archive/v0.4.tar.gz',
+    download_url='https://github.com/jessamynsmith/pipreq/archive/v{0}.tar.gz'.format(version),
     license='MIT',
     description="Manages pip requirements files for multiple environments, e.g. production and "
                 "development",

@@ -125,24 +125,20 @@ Create a virtualenv and install dependencies:
     mkvirtualenv pipreq
     pip install -r requirements/package.txt -r requirements/test.txt
 
-Run tests and view coverage:
+Run tests with coverage (should be 100%) and check code style:
 
 ::
 
     coverage run -m nose
-    coverage report
+    coverage report -m
+    flake8
 
 Verify all supported Python versions:
 
 ::
 
+    pip install tox
     tox
-
-Check code style:
-
-::
-
-    flake8
 
 Install your local copy:
 
