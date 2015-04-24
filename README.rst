@@ -125,7 +125,7 @@ Create a virtualenv and install dependencies:
     mkvirtualenv pipreq
     pip install -r requirements/package.txt -r requirements/test.txt
 
-Run tests with coverage (should be 100%) and check code style:
+Run tests with coverage (should be 99%) and check code style:
 
 ::
 

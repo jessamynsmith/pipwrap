@@ -1,7 +1,7 @@
 try:
     import configparser
-except ImportError:
-    import ConfigParser as configparser
+except ImportError:  # pragma nocover
+    import ConfigParser as configparser  # pragma nocover
 import os
 import re
 import subprocess
@@ -101,11 +101,11 @@ class Command(object):
 
     def _remap_stdin(self):
         # Since stdin was taken by the input file, reconnect so we can get user input
-        sys.stdin = open('/dev/tty')
+        sys.stdin = open('/dev/tty')  # pragma nocover
 
     def _get_section_key(self):
-        prompt = '> '
-        return input(prompt)
+        prompt = '> '  # pragma nocover
+        return input(prompt)  # pragma nocover
 
     def _get_section(self, package, sections, section_text):
         print("Which section should package '%s' go into? %s" % (package, section_text))

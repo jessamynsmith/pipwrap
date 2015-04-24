@@ -6,6 +6,11 @@ import unittest
 from pipreq import cli
 
 
+class MockPackage():
+    def __init__(self):
+        self.version = 0.4
+
+
 class TestCli(unittest.TestCase):
 
     def setUp(self):
@@ -58,6 +63,7 @@ class TestCli(unittest.TestCase):
         mock_exit.assert_called_once_with(message='\nERROR: An error occurred!\n')
 
     def test_main_no_args(self):
+        sys.argv = ['pipreq']
         try:
             cli.main()
             self.fail("Should fail without arguments")
@@ -73,6 +79,18 @@ class TestCli(unittest.TestCase):
         except SystemExit as e:
             self.assertEqual('0', str(e))
 
+    @patch('pkg_resources.require')
+    def test_main_version(self, mock_require):
+        sys.argv = ['pipreq', '--version']
+        mock_require.return_value = [MockPackage()]
+
+        try:
+            cli.main()
+            self.fail("Should exit on version request")
+        except SystemExit as e:
+            self.assertEqual('pipreq 0.4', '{0}'.format(e))
+        mock_require.assert_called_once_with('pipreq')
+
     def test_main_success(self):
         _, packages = tempfile.mkstemp()
         sys.argv = ['pipreq', '-U', packages]
@@ -80,3 +98,14 @@ class TestCli(unittest.TestCase):
         result = cli.main()
 
         self.assertEqual(0, result)
+
+    @patch('argparse.ArgumentParser')
+    def test_main_keyboard_interrupt(self, mock_argparse):
+        sys.argv = ['pipreq', '--version']
+        mock_argparse.side_effect = KeyboardInterrupt()
+
+        try:
+            cli.main()
+            self.fail("Should exit on version request")
+        except SystemExit as e:
+            self.assertEqual('', '{0}'.format(e))
