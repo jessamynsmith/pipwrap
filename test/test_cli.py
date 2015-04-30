@@ -1,9 +1,8 @@
 from mock import patch
 import sys
-import tempfile
 import unittest
 
-from pipreq import cli
+from pipwrap import cli
 
 
 class MockPackage():
@@ -21,21 +20,11 @@ class TestCli(unittest.TestCase):
 
         error_message = cli.verify_args(args)
 
-        expected_error = ('Must specify generate (-g) or create/upgrade/remove-missing (-[cUx]) '
-                          'with packages')
+        expected_error = ('Must specify requirements-files (-r) or remove-missing (-x).')
         self.assertEqual(expected_error, error_message)
 
-    def test_verify_args_create_with_packages(self):
-        package_file = tempfile.NamedTemporaryFile()
-
-        args = self.parser.parse_args(['-c', package_file.name])
-
-        error_message = cli.verify_args(args)
-
-        self.assertEqual(None, error_message)
-
     def test_verify_args_generate(self):
-        args = self.parser.parse_args(['-g'])
+        args = self.parser.parse_args(['-r'])
 
         error_message = cli.verify_args(args)
 
@@ -49,7 +38,7 @@ class TestCli(unittest.TestCase):
         self.assertEqual(None, error_message)
 
     def test_verify_args_update_dry_run(self):
-        args = self.parser.parse_args(['-U', '-n'])
+        args = self.parser.parse_args(['-r', '-n'])
 
         error_message = cli.verify_args(args)
 
@@ -63,7 +52,7 @@ class TestCli(unittest.TestCase):
         mock_exit.assert_called_once_with(message='\nERROR: An error occurred!\n')
 
     def test_main_no_args(self):
-        sys.argv = ['pipreq']
+        sys.argv = ['pipwrap']
         try:
             cli.main()
             self.fail("Should fail without arguments")
@@ -71,7 +60,7 @@ class TestCli(unittest.TestCase):
             self.assertEqual('0', str(e))
 
     def test_main_invalid_args(self):
-        sys.argv = ['pipreq', '-c', '-g']
+        sys.argv = ['pipwrap', '-x', '-r']
 
         try:
             cli.main()
@@ -81,19 +70,18 @@ class TestCli(unittest.TestCase):
 
     @patch('pkg_resources.require')
     def test_main_version(self, mock_require):
-        sys.argv = ['pipreq', '--version']
+        sys.argv = ['pipwrap', '--version']
         mock_require.return_value = [MockPackage()]
 
         try:
             cli.main()
             self.fail("Should exit on version request")
         except SystemExit as e:
-            self.assertEqual('pipreq 0.4', '{0}'.format(e))
-        mock_require.assert_called_once_with('pipreq')
+            self.assertEqual('pipwrap 0.4', '{0}'.format(e))
+        mock_require.assert_called_once_with('pipwrap')
 
     def test_main_success(self):
-        _, packages = tempfile.mkstemp()
-        sys.argv = ['pipreq', '-U', packages]
+        sys.argv = ['pipwrap', '-x', '-n']
 
         result = cli.main()
 
@@ -101,7 +89,7 @@ class TestCli(unittest.TestCase):
 
     @patch('argparse.ArgumentParser')
     def test_main_keyboard_interrupt(self, mock_argparse):
-        sys.argv = ['pipreq', '--version']
+        sys.argv = ['pipwrap', '--version']
         mock_argparse.side_effect = KeyboardInterrupt()
 
         try:

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os.path as p
 
-version = '0.4.4'
+version = '0.1.0'
 
 with open(p.join(p.dirname(__file__), 'requirements', 'package.txt'), 'r') as reqs:
     install_requires = [line.strip() for line in reqs]
@@ -14,12 +14,12 @@ except IOError:
     pass
 
 setup(
-    name="pipreq",
+    name="pipwrap",
     version=version,
     author="Jessamyn Smith",
     author_email="jessamyn.smith@gmail.com",
-    url="https://github.com/jessamynsmith/pipreq",
-    download_url='https://github.com/jessamynsmith/pipreq/archive/v{0}.tar.gz'.format(version),
+    url="https://github.com/jessamynsmith/pipwrap",
+    download_url='https://github.com/jessamynsmith/pipwrap/archive/v{0}.tar.gz'.format(version),
     license='MIT',
     description="Manages pip requirements files for multiple environments, e.g. production and "
                 "development",
@@ -33,7 +33,7 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'pipreq = pipreq.cli:main'
+            'pipwrap = pipwrap.cli:main'
         ],
     },
 

@@ -1,4 +1,4 @@
 [run]
-source = pipreq
+source = pipwrap
 branch = 1
 omit = */test/*

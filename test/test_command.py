@@ -1,281 +1,116 @@
 import os
 import sys
 from mock import MagicMock, patch
+import shutil
 import tempfile
 import unittest
 
-from pipreq import cli, command
+from pipwrap import cli, command
 
 
-def _create_packages(content='-r common.txt\nmock==1.2\nDjango==1.7\nnose==1.3\n'):
-    output_dir = tempfile.mkdtemp()
-    filename = os.path.join(output_dir, 'packages.txt')
+def get_key(requirement):
+    return requirement.line
+
+
+def _create_requirements_file(output_dir, filename='packages.txt',
+                              content='-r common.txt\nmock==1.2\nDjango==1.7\nnose==1.3\n'):
+    filename = os.path.join(output_dir, filename)
     with open(filename, 'w') as packages:
         packages.write(content)
-    return open(filename, 'r')
 
 
 class TestCommand(unittest.TestCase):
 
     def setUp(self):
         self.parser = cli.create_parser()
-        self.rc_file_blank = tempfile.NamedTemporaryFile()
-        self.blank_command = command.Command(self.parser.parse_args([]), self.rc_file_blank.name)
-
-        self.rc_file = tempfile.NamedTemporaryFile()
-        self.rc_file.write(b'[metadata]\nshared=common\n[development]\nmock=1.0\n'
-                           b'[common]\nDjango=1.7\npsycopg2=\n')
-        self.rc_file.flush()
-        self.populated_command = command.Command(self.parser.parse_args([]), self.rc_file.name)
-
-    def test_init(self):
-        self.assertTrue(self.populated_command.config.has_section('common'))
-        self.assertTrue(self.populated_command.config.has_option('common', 'Django'))
-
-        # Ensure that capitalization is preserved
-        output_dir = tempfile.mkdtemp()
-        filename = os.path.join(output_dir, '.rc')
-        with open(filename, 'w') as output:
-            self.populated_command.config.write(output)
-        expected = ('[metadata]\nshared = common\n\n[development]\nmock = 1.0\n\n'
-                    '[common]\nDjango = 1.7\npsycopg2 = \n\n')
-        with open(filename, 'r') as output:
-            self.assertEqual(expected, open(output.name).read())
-
-    def test_add_section_new_section(self):
-        self.blank_command._add_section('common')
-
-        self.assertTrue(self.blank_command.config.has_section('common'))
-
-    def test_add_section_duplicate_section(self):
-        self.populated_command._add_section('common')
-
-        self.assertTrue(self.populated_command.config.has_section('common'))
-
-    def test_set_option(self):
-        self.blank_command._set_option('common', 'Django', '1.7')
-
-        self.assertTrue(self.blank_command.config.has_section('common'))
-        self.assertTrue(self.blank_command.config.has_option('common', 'Django'))
-        self.assertEqual('1.7', self.blank_command.config.get('common', 'Django'))
-
-    def test_get_option_does_not_exist(self):
-        section, value = self.blank_command._get_option('Django')
-
-        self.assertEqual(None, section)
-        self.assertEqual(None, value)
-
-    def test_get_option_exists(self):
-        section, value = self.populated_command._get_option('Django')
-
-        self.assertEqual('common', section)
-        self.assertEqual('1.7', value)
-
-    def test_get_shared_section_does_not_exist(self):
-        shared = self.blank_command._get_shared_section()
-
-        self.assertEqual(None, shared)
-
-    def test_get_shared_section_exists(self):
-        shared = self.populated_command._get_shared_section()
-
-        self.assertEqual('common', shared)
-
-    def test_make_requirements_directory_does_not_exist(self):
         tempdir = tempfile.mkdtemp()
+        self.command = command.Command(self.parser.parse_args([]), tempdir)
+        self.command.get_filename_key = MagicMock(return_value=0)
 
-        req_dir = self.blank_command._make_requirements_directory(tempdir)
-
-        self.assertEqual('%s/requirements' % tempdir, req_dir)
-
-    def test_make_requirements_directory_exists(self):
-        tempdir = tempfile.mkdtemp()
-        os.makedirs(os.path.join(tempdir, 'requirements'))
-
-        req_dir = self.blank_command._make_requirements_directory(tempdir)
-
-        self.assertEqual(os.path.join(tempdir, 'requirements'), req_dir)
-
-    def test_format_requirements_line(self):
-        line = self.blank_command._format_requirements_line('Django', '1.7')
-
-        self.assertEqual('Django==1.7\n', line)
-
-    def test_write_requirements_file_for_shared_section(self):
-        req_file = tempfile.NamedTemporaryFile()
-        reqs = {'Django': '1.7', 'psycopg2': '2.5.4'}
-
-        self.blank_command._write_requirements_file('common', 'common', reqs, req_file.name)
-
-        self.assertEqual(b'Django==1.7\npsycopg2==2.5.4\n', req_file.read())
-
-    def test_write_requirements_file_with_shared_section(self):
-        req_file = tempfile.NamedTemporaryFile()
-        reqs = {'gunicorn': '19.1.1'}
-
-        self.blank_command._write_requirements_file('common', 'production', reqs, req_file.name)
-
-        self.assertEqual(b'-r common.txt\ngunicorn==19.1.1\n', req_file.read())
+    def tearDown(self):
+        shutil.rmtree(self.command.requirements_dir, ignore_errors=True)
 
     def test_generate_requirements_files_no_data(self):
-        tempdir = tempfile.mkdtemp()
+        self.command._get_installed_packages = MagicMock(return_value=set())
 
-        self.blank_command.generate_requirements_files(tempdir)
+        self.command.generate_requirements_files()
 
-        self.assertTrue(os.path.exists(os.path.join(tempdir, 'requirements')))
+        self.assertTrue(os.path.exists(self.command.requirements_dir))
 
-    def test_generate_requirements_files_with_data(self):
-        tempdir = tempfile.mkdtemp()
-        self.populated_command.config.add_section('empty')
+    @patch('subprocess.check_output')
+    def test_generate_requirements_files_create(self, mock_check_output):
+        mock_check_output.return_value = 'mock==1.1\nflake8==2.5\n'
+        _create_requirements_file(self.command.requirements_dir, 'common.txt', '')
 
-        self.populated_command.generate_requirements_files(tempdir)
+        self.command.generate_requirements_files()
 
-        self.assertTrue(os.path.exists(os.path.join(tempdir, 'requirements')))
-        common_reqs = open(os.path.join(tempdir, 'requirements', 'common.txt'))
-        self.assertEqual('Django==1.7\npsycopg2\n', common_reqs.read())
-        dev_reqs = open(os.path.join(tempdir, 'requirements', 'development.txt'))
-        self.assertEqual('-r common.txt\nmock==1.0\n', dev_reqs.read())
+        self.assertTrue(os.path.exists(self.command.requirements_dir))
+        common_reqs = open(os.path.join(self.command.requirements_dir, 'common.txt'))
+        self.assertEqual('flake8==2.5\nmock==1.1\n', common_reqs.read())
 
-    def test_run_generate_requirements_files(self):
-        tempdir = tempfile.mkdtemp()
-        self.populated_command.args = self.parser.parse_args(['-g'])
+    @patch('subprocess.check_output')
+    def test_generate_requirements_files_update(self, mock_check_output):
+        mock_check_output.return_value = 'mock==1.1\nflake8==2.5\n'
+        _create_requirements_file(self.command.requirements_dir, 'common.txt')
 
-        self.populated_command.run(tempdir)
+        self.command.generate_requirements_files()
 
-        self.assertTrue(os.path.exists(os.path.join(tempdir, 'requirements')))
-        common_reqs = open(os.path.join(tempdir, 'requirements', 'common.txt'))
-        self.assertEqual('Django==1.7\npsycopg2\n', common_reqs.read())
-        dev_reqs = open(os.path.join(tempdir, 'requirements', 'development.txt'))
-        self.assertEqual('-r common.txt\nmock==1.0\n', dev_reqs.read())
+        self.assertTrue(os.path.exists(self.command.requirements_dir))
+        common_reqs = open(os.path.join(self.command.requirements_dir, 'common.txt'))
+        self.assertEqual('Django==1.7\nflake8==2.5\nmock==1.1\nnose==1.3\n', common_reqs.read())
 
-    def test_parse_requirements_empty(self):
-        self.assertEqual((), self.blank_command._parse_requirements(""))
-
-    def test_parse_requirements_non_empty(self):
-        input = ("unicorn==19.1.1", "dragon==2.0")
-        expected = (("unicorn", "19.1.1"), ("dragon", "2.0"))
-        self.assertEqual(expected, self.blank_command._parse_requirements(input))
-
-    def test_parse_requirements_with_non_matching_lines(self):
-        input = ("-r common.txt", "unicorn==19.1.1", "-e http://example.com/some-repo.git")
-        expected = (("unicorn", "19.1.1"),)
-        self.assertEqual(expected, self.blank_command._parse_requirements(input))
-
-
-class TestCreateRcFile(unittest.TestCase):
-
-    def setUp(self):
-        self.parser = cli.create_parser()
-        self.rc_file_blank = tempfile.NamedTemporaryFile()
-        self.blank_command = command.Command(self.parser.parse_args([]), self.rc_file_blank.name)
-        self.blank_command._remap_stdin = MagicMock()
-
-        self.rc_file = tempfile.NamedTemporaryFile()
-        self.rc_file.write(b'[metadata]\nshared=common\n[development]\nmock=1.0\n'
-                           b'[common]\nDjango=\npsycopg2=2.5.4\n')
-        self.rc_file.flush()
-        self.populated_command = command.Command(self.parser.parse_args([]), self.rc_file.name)
-        self.populated_command._remap_stdin = MagicMock()
-        self.populated_command._get_section = MagicMock(return_value='common')
-
-    def test_get_section(self):
-        self.blank_command._get_section_key = MagicMock(side_effect=['aaa', '2', '1'])
-
-        section = self.blank_command._get_section('nose', {1: 'common'}, '')
-
-        self.assertEqual('common', section)
-
-    def test_create_rc_file_default_empty(self):
-        packages = tempfile.NamedTemporaryFile()
-
-        self.blank_command.create_rc_file(packages)
-
-        expected = b'[metadata]\nshared = common\n\n[common]\n\n[development]\n\n[production]\n\n'
-        self.assertEqual(expected, self.rc_file_blank.read())
-
-    def test_create_rc_file_default_add_packages(self):
-        packages = tempfile.NamedTemporaryFile()
-
-        self.blank_command.create_rc_file(packages)
-
-        expected = b'[metadata]\nshared = common\n\n[common]\n\n[development]\n\n[production]\n\n'
-        self.assertEqual(expected, self.rc_file_blank.read())
-
-    def test_create_rc_file(self):
-        packages = _create_packages()
-
-        self.populated_command.create_rc_file(packages)
-
-        expected = ['[metadata]\n', 'shared = common\n', '\n', '[development]\n', 'mock = 1.2\n',
-                    '\n', '[common]\n', 'Django = \n', 'nose = 1.3\n', '\n']
-        self.assertEqual(expected, open(self.populated_command.rc_filename).readlines())
-
-    def test_run_create_rc_file(self):
-        package_file = tempfile.NamedTemporaryFile()
-        package_file.write(b'mock==1.2\nDjango==1.7\nnose==1.3\n')
-        package_file.seek(0)
-        self.populated_command.args = self.parser.parse_args(['-c', package_file.name])
-
-        self.populated_command.run()
-
-        expected = ['[metadata]\n', 'shared = common\n', '\n', '[development]\n', 'mock = 1.2\n',
-                    '\n', '[common]\n', 'Django = \n', 'nose = 1.3\n', '\n']
-        self.assertEqual(expected, open(self.populated_command.rc_filename).readlines())
-
-
-class TestUpgrade(unittest.TestCase):
-
-    def setUp(self):
-        self.parser = cli.create_parser()
-        self.rc_file_blank = tempfile.NamedTemporaryFile()
-        self.command = command.Command(self.parser.parse_args([]), self.rc_file_blank.name)
-
-    @patch('subprocess.check_call')
-    def test_upgrade_packages(self, mock_check_call):
-        packages = _create_packages()
-
-        self.command.upgrade_packages(packages)
-
-        mock_check_call.assert_called_once_with(['pip', 'install', '-U', 'mock', 'Django', 'nose'])
-
-    @patch('subprocess.check_call')
-    def test_run_upgrade_packages(self, mock_check_call):
-        package_file = tempfile.NamedTemporaryFile()
-        package_file.write(b'mock==1.2\nDjango==1.7\nnose==1.3\n')
-        package_file.seek(0)
-        self.command.args = self.parser.parse_args(['-U', package_file.name])
+    @patch('subprocess.check_output')
+    def test_run_generate_requirements_files(self, mock_check_output):
+        mock_check_output.return_value = 'mock==1.1\nflake8==2.5\n'
+        _create_requirements_file(self.command.requirements_dir, 'common.txt',
+                                  content='Django==1.7\n')
+        _create_requirements_file(self.command.requirements_dir, 'development.txt',
+                                  content='-r common.txt\nmock==1.2\nnose==1.3\n')
+        self.command.args = self.parser.parse_args(['-r'])
 
         self.command.run()
 
-        mock_check_call.assert_called_once_with(['pip', 'install', '-U', 'mock', 'Django', 'nose'])
+        self.assertTrue(os.path.exists(self.command.requirements_dir))
+        common_reqs = open(os.path.join(self.command.requirements_dir, 'common.txt'))
+        self.assertEqual('Django==1.7\nflake8==2.5\n', common_reqs.read())
+        dev_reqs = open(os.path.join(self.command.requirements_dir, 'development.txt'))
+        self.assertEqual('mock==1.1\nnose==1.3\n', dev_reqs.read())
+        # TODO should preserve -r line
+        # self.assertEqual('-r common.txt\nmock==1.1\nnose==1.3\n', dev_reqs.read())
 
 
-class TestDetermineExtra(unittest.TestCase):
+class TestRemoveExtra(unittest.TestCase):
+    maxDiff = None
+
     def setUp(self):
         self.parser = cli.create_parser()
-        self.rc_file_blank = tempfile.NamedTemporaryFile()
-        self.command = command.Command(self.parser.parse_args([]), self.rc_file_blank.name)
+        tempdir = tempfile.mkdtemp()
+        self.command = command.Command(self.parser.parse_args([]), tempdir)
+
+    def tearDown(self):
+        shutil.rmtree(self.command.requirements_dir, ignore_errors=True)
 
     @patch('subprocess.check_output')
     @patch('subprocess.check_call')
     def test_determine_extra_packages_no_discrepancies(self, mock_check_call, mock_check_output):
         mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\n'
-        packages = _create_packages()
+        _create_requirements_file(self.command.requirements_dir)
 
-        extras = self.command.determine_extra_packages(packages)
+        extras = self.command.determine_extra_packages()
 
-        self.assertEqual((), extras)
+        self.assertEqual(set(), extras)
         self.assertFalse(mock_check_call.called)
 
     @patch('subprocess.check_output')
     @patch('subprocess.check_call')
     def test_determine_extra_packages(self, mock_check_call, mock_check_output):
         mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\ndjango-nose==1.0\n'
-        packages = _create_packages()
+        _create_requirements_file(self.command.requirements_dir)
 
-        extras = self.command.determine_extra_packages(packages)
+        extras = self.command.determine_extra_packages()
 
-        self.assertEqual(("django-nose",), extras)
+        self.assertEqual(1, len(extras))
+        self.assertEqual("django-nose", list(extras)[0].name)
         self.assertFalse(mock_check_call.called)
 
     @patch('subprocess.check_output')
@@ -286,28 +121,24 @@ class TestDetermineExtra(unittest.TestCase):
             'mock==1.2\nDjango==1.7\nnose==1.3\n' \
             '-e http://example.com/some-repo.git\n' \
             'django-nose==1.0\n'
-        packages = _create_packages('mock==1.2\nDjango==1.7\nnose==1.3\n')
+        _create_requirements_file(self.command.requirements_dir,
+                                  'mock==1.2\nDjango==1.7\nnose==1.3\n')
 
-        extras = self.command.determine_extra_packages(packages)
+        extras = self.command.determine_extra_packages()
 
-        self.assertEqual(("django-nose",), extras)
+        extras = sorted(list(extras), key=get_key)
+        self.assertEqual(2, len(extras))
+        self.assertEqual("-e http://example.com/some-repo.git", extras[0].line)
+        self.assertEqual("django-nose", extras[1].name)
         self.assertFalse(mock_check_call.called)
-
-
-class TestRemoveExtra(unittest.TestCase):
-
-    def setUp(self):
-        self.parser = cli.create_parser()
-        self.rc_file_blank = tempfile.NamedTemporaryFile()
-        self.command = command.Command(self.parser.parse_args([]), self.rc_file_blank.name)
 
     @patch('subprocess.check_output')
     @patch('subprocess.check_call')
     def test_remove_extra_packages_when_none_to_remove(self, mock_check_call, mock_check_output):
         mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\n'
-        packages = _create_packages()
+        _create_requirements_file(self.command.requirements_dir)
 
-        self.command.remove_extra_packages(packages)
+        self.command.remove_extra_packages()
 
         self.assertFalse(mock_check_call.called)
 
@@ -315,9 +146,9 @@ class TestRemoveExtra(unittest.TestCase):
     @patch('subprocess.check_call')
     def test_remove_extra_packages_when_some_to_remove(self, mock_check_call, mock_check_output):
         mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\ndjango-nose==1.0\n'
-        packages = _create_packages()
+        _create_requirements_file(self.command.requirements_dir)
 
-        self.command.remove_extra_packages(packages)
+        self.command.remove_extra_packages()
 
         mock_check_call.assert_called_once_with(['pip', 'uninstall', '-y', 'django-nose'])
 
@@ -325,10 +156,8 @@ class TestRemoveExtra(unittest.TestCase):
     @patch('subprocess.check_call')
     def test_run_remove_extra_packages_dry_run(self, mock_check_call, mock_check_output):
         mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\ndjango-nose==1.0\n'
-        package_file = tempfile.NamedTemporaryFile()
-        package_file.write(b'mock==1.2\nDjango==1.7\nnose==1.3\n')
-        package_file.seek(0)
-        self.command.args = self.parser.parse_args(['-xn', package_file.name])
+        _create_requirements_file(self.command.requirements_dir)
+        self.command.args = self.parser.parse_args(['-xn'])
 
         self.command.run()
 
@@ -340,11 +169,11 @@ class TestRemoveExtra(unittest.TestCase):
     @patch('subprocess.check_call')
     def test_run_remove_extra_packages(self, mock_check_call, mock_check_output):
         mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\ndjango-nose==1.0\n'
-        package_file = tempfile.NamedTemporaryFile()
-        package_file.write(b'mock==1.2\nDjango==1.7\nnose==1.3\n')
-        package_file.seek(0)
-        self.command.args = self.parser.parse_args(['-x', package_file.name])
+        _create_requirements_file(self.command.requirements_dir)
+        self.command.args = self.parser.parse_args(['-x'])
 
         self.command.run()
 
         mock_check_call.assert_called_once_with(['pip', 'uninstall', '-y', 'django-nose'])
+
+    # TODO check if we really need tests for all these cases or if some are redundant

@@ -2,7 +2,7 @@ import argparse
 import pkg_resources
 import sys
 
-from pipreq.command import Command
+from pipwrap.command import Command
 
 
 def create_parser():
@@ -11,28 +11,24 @@ def create_parser():
                     'per-environment requirements files.')
 
     parser.add_argument('--version', action='store_true', default=False,
-                        help="Show program's version number")
-    parser.add_argument('-g', '--generate', action='store_true', default=False,
-                        help='Generate requirements files')
-    parser.add_argument('-c', '--create', action='store_true', default=False,
-                        help='Create or update rc file (requires list of packages)')
-    parser.add_argument('-U', '--upgrade', action='store_true', default=False,
-                        help='Upgrade packages (requires list of packages)')
+                        help="Show program's version number.")
+    parser.add_argument('-r', '--requirements-files', action='store_true', default=False,
+                        help='Generate or update requirements files.')
+
     parser.add_argument('-x', '--remove-extra', action='store_true', default=False,
-                        help='Remove packages not in list (requires list of packages)')
+                        help='Remove packages not in list (requires list of packages).')
+
     parser.add_argument('-n', '--dry-run', action='store_true', default=False,
                         help='Don\'t actually make any changes; '
-                             'only show what would have been done')
-    parser.add_argument('packages', nargs='?', type=argparse.FileType('r'), default=sys.stdin)
+                             'only show what would have been done.')
 
     return parser
 
 
 def verify_args(args):
-    has_one_option = (bool(args.create) ^ bool(args.generate) ^ bool(args.upgrade)
-                      ^ bool(args.remove_extra))
+    has_one_option = (bool(args.requirements_files) ^ bool(args.remove_extra))
     if not has_one_option:
-        return 'Must specify generate (-g) or create/upgrade/remove-missing (-[cUx]) with packages'
+        return 'Must specify requirements-files (-r) or remove-missing (-x).'
     if args.dry_run and not args.remove_extra:
         return '-n is only supported with -x'
     return None
@@ -49,12 +45,12 @@ def main():
         parsed_args = parser.parse_args()
 
         if parsed_args.version:
-            parser.exit("pipreq %s" % pkg_resources.require("pipreq")[0].version)
+            parser.exit("pipwrap %s" % pkg_resources.require("pipwrap")[0].version)
 
         error_message = verify_args(parsed_args)
         if error_message:
             error(parser, error_message)
-        command = Command(parsed_args, ".requirementsrc")
+        command = Command(parsed_args)
         command.run()
         return 0
     except KeyboardInterrupt:
