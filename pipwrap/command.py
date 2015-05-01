@@ -14,6 +14,13 @@ def get_key(requirement):
     return requirement.name
 
 
+class RequirementsFile(object):
+
+    def __init__(self):
+        self.included_files = []
+        self.packages = set()
+
+
 class Command(object):
 
     def __init__(self, args, base_dir='.'):
@@ -41,12 +48,13 @@ class Command(object):
         specs = ['%s%s' % (spec[0], spec[1]) for spec in package.specs]
         return '%s%s\n' % (package.name, ','.join(specs))
 
-    def _write_requirements_file(self, req_list, filename):
-        # TODO Need to preserve -r lines, maybe vcs lines
+    def _write_requirements_file(self, req_file, filename):
+        # TODO maybe need to preserve vcs lines
         filename = os.path.join(self.requirements_dir, filename)
-        with open(filename, 'w+') as req_file:
-            for package in sorted(req_list, key=get_key):
-                req_file.write(self._format_requirements_line(package))
+        with open(filename, 'w+') as req_output_file:
+            req_output_file.writelines(req_file.included_files)
+            for package in sorted(req_file.packages, key=get_key):
+                req_output_file.write(self._format_requirements_line(package))
 
     def _get_installed_packages(self):
         """ Get a set of installed packages
@@ -65,10 +73,14 @@ class Command(object):
         """
         req_files = {}
         for req_filename in os.listdir(self.requirements_dir):
-            required_set = set()
             with open(os.path.join(self.requirements_dir, req_filename)) as requirements_file:
-                required_set = set(requirements.parse(requirements_file))
-            req_files[req_filename] = required_set
+                req_file = RequirementsFile()
+                for line in requirements_file.readlines():
+                    if line.strip().startswith('-r'):
+                        req_file.included_files.append(line)
+                    requirements_file.seek(0)
+                req_file.packages = set(requirements.parse(requirements_file))
+            req_files[req_filename] = req_file
         return req_files
 
     def _compare_installed_and_required(self, installed_set, requirement_files):
@@ -80,7 +92,7 @@ class Command(object):
         """
         missing_set = installed_set.copy()
         for req_file in requirement_files:
-            for requirement in requirement_files[req_file]:
+            for requirement in requirement_files[req_file].packages:
                 for installed in installed_set:
                     if installed.name == requirement.name:
                         requirement.specs = installed.specs
@@ -96,7 +108,7 @@ class Command(object):
         req_files = self._get_requirements_from_files()
         (req_files, missing_reqs) = self._compare_installed_and_required(installed_reqs, req_files)
 
-        # TODO If no files, and missing reqs, prompt user for filenames
+        # TODO If no files, and missing reqs, prompt user for filenames?
         filenames = {}
         filename_text = []
         for i, filename in enumerate(sorted(req_files.keys())):
@@ -107,7 +119,7 @@ class Command(object):
         # Add missing requirements to user-selected file
         for requirement in missing_reqs:
             filename = self.get_filename(requirement.name, filenames, filename_text)
-            req_files[filename].add(requirement)
+            req_files[filename].packages.add(requirement)
 
         for req_filename in req_files:
             self._write_requirements_file(req_files[req_filename], req_filename)

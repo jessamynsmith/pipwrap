@@ -51,7 +51,8 @@ class TestCommand(unittest.TestCase):
     @patch('subprocess.check_output')
     def test_generate_requirements_files_update(self, mock_check_output):
         mock_check_output.return_value = 'mock==1.1\nflake8==2.5\n'
-        _create_requirements_file(self.command.requirements_dir, 'common.txt')
+        _create_requirements_file(self.command.requirements_dir, 'common.txt',
+                                  'mock==1.2\nDjango==1.7\nnose==1.3\n')
 
         self.command.generate_requirements_files()
 
@@ -74,9 +75,7 @@ class TestCommand(unittest.TestCase):
         common_reqs = open(os.path.join(self.command.requirements_dir, 'common.txt'))
         self.assertEqual('Django==1.7\nflake8==2.5\n', common_reqs.read())
         dev_reqs = open(os.path.join(self.command.requirements_dir, 'development.txt'))
-        self.assertEqual('mock==1.1\nnose==1.3\n', dev_reqs.read())
-        # TODO should preserve -r line
-        # self.assertEqual('-r common.txt\nmock==1.1\nnose==1.3\n', dev_reqs.read())
+        self.assertEqual('-r common.txt\nmock==1.1\nnose==1.3\n', dev_reqs.read())
 
 
 class TestRemoveExtra(unittest.TestCase):
