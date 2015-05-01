@@ -1,8 +1,10 @@
+from __future__ import absolute_import
+
 import argparse
 import pkg_resources
 import sys
 
-from pipwrap.command import Command
+from .command import Command
 
 
 def create_parser():
