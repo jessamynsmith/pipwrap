@@ -11,7 +11,10 @@ import requirements
 
 
 def get_key(requirement):
-    return requirement.name
+    key = requirement.name
+    if not key:
+        key = requirement.path
+    return key
 
 
 class RequirementsFile(object):
@@ -29,15 +32,15 @@ class Command(object):
         if not os.path.exists(self.requirements_dir):
             os.makedirs(self.requirements_dir)
 
-    def get_filename_key(self, prompt):
+    def _get_filename_key(self, prompt):
         return input(prompt)  # pragma nocover
 
-    def get_filename(self, package, filenames, filename_text):
+    def _get_filename(self, package, filenames, filename_text):
         print("Which file should package '%s' go into? %s" % (package, filename_text))
         prompt = '> '
         filename = ''
         while not filename:
-            filename_key = self.get_filename_key(prompt)
+            filename_key = self._get_filename_key(prompt)
             try:
                 filename = filenames[int(filename_key)]
             except (TypeError, ValueError, KeyError):
@@ -45,7 +48,7 @@ class Command(object):
         return filename
 
     def _format_requirements_line(self, package):
-        if package.uri:
+        if package.uri or package.path:
             text = package.line
         else:
             specs = ['%s%s' % (spec[0], spec[1]) for spec in package.specs]
@@ -111,23 +114,29 @@ class Command(object):
         req_files = self._get_requirements_from_files()
         (req_files, missing_reqs) = self._compare_installed_and_required(installed_reqs, req_files)
 
-        # TODO If no files, and missing reqs, prompt user for filenames?
         filenames = {}
         filename_text = []
-        for i, filename in enumerate(sorted(req_files.keys())):
+        filename_list = sorted(req_files.keys())
+        if len(filename_list) < 1:
+            default_filename = 'requirements.txt'
+            req_files[default_filename] = RequirementsFile()
+            filename_list.append(default_filename)
+        for i, filename in enumerate(filename_list):
             filenames[i] = filename
             filename_text.append('%s. %s' % (i, filename))
         filename_text = ' / '.join(filename_text)
 
         # Add missing requirements to user-selected file
         for requirement in missing_reqs:
-            filename = self.get_filename(requirement.name, filenames, filename_text)
+            filename = self._get_filename(requirement.name, filenames, filename_text)
             req_files[filename].packages.add(requirement)
 
         for req_filename in req_files:
             self._write_requirements_file(req_files[req_filename], req_filename)
 
-    def determine_extra_packages(self):
+        return 0
+
+    def _determine_extra_packages(self):
         """ Determine all packages that are installed, but missing from requirements files
         :return: Set of packages to be removed
         """
@@ -140,7 +149,7 @@ class Command(object):
     def remove_extra_packages(self):
         """ Remove all packages missing from list """
 
-        removal_set = self.determine_extra_packages()
+        removal_set = self._determine_extra_packages()
         if not removal_set:
             print("No packages to be removed")
         else:
@@ -158,8 +167,12 @@ class Command(object):
                 args.extend(package_names)
                 subprocess.check_call(args)
 
+        return 0
+
     def run(self):
+        result = 1
         if self.args.requirements_files:
-            self.generate_requirements_files()
+            result = self.generate_requirements_files()
         elif self.args.remove_extra:
-            self.remove_extra_packages()
+            result = self.remove_extra_packages()
+        return result

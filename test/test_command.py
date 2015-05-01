@@ -25,10 +25,17 @@ class TestCommand(unittest.TestCase):
         self.parser = cli.create_parser()
         tempdir = tempfile.mkdtemp()
         self.command = command.Command(self.parser.parse_args([]), tempdir)
-        self.command.get_filename_key = MagicMock(return_value=0)
+        self.command._get_filename_key = MagicMock(return_value=0)
 
     def tearDown(self):
         shutil.rmtree(self.command.requirements_dir, ignore_errors=True)
+
+    def test_get_filename(self):
+        self.command._get_filename_key = MagicMock(side_effect=['a', 0])
+
+        filename = self.command._get_filename('', ['test.text'], '')
+
+        self.assertEqual('test.text', filename)
 
     def test_generate_requirements_files_no_data(self):
         self.command._get_installed_packages = MagicMock(return_value=set())
@@ -40,12 +47,11 @@ class TestCommand(unittest.TestCase):
     @patch('subprocess.check_output')
     def test_generate_requirements_files_create(self, mock_check_output):
         mock_check_output.return_value = 'mock==1.1\nflake8==2.5\n'
-        _create_requirements_file(self.command.requirements_dir, 'common.txt', '')
 
         self.command.generate_requirements_files()
 
         self.assertTrue(os.path.exists(self.command.requirements_dir))
-        common_reqs = open(os.path.join(self.command.requirements_dir, 'common.txt'))
+        common_reqs = open(os.path.join(self.command.requirements_dir, 'requirements.txt'))
         self.assertEqual('flake8==2.5\nmock==1.1\n', common_reqs.read())
 
     @patch('subprocess.check_output')
@@ -67,8 +73,9 @@ class TestCommand(unittest.TestCase):
                                   content='Django==1.7\n')
         vcs_line = ('-e git://github.com/jessamynsmith/django_coverage_plugin.git@'
                     'f03bdc0981ceface4bfea6aa3544e519a2b908aa#egg=django-coverage-plugin')
-        _create_requirements_file(self.command.requirements_dir, 'development.txt',
-                                  content='-r common.txt\nmock==1.2\n%s\nnose==1.3\n' % vcs_line)
+        uri_line = '-e http://example.com/some-repo.git'
+        content = '-r common.txt\nmock==1.2\n%s\nnose==1.3\n%s\n' % (vcs_line, uri_line)
+        _create_requirements_file(self.command.requirements_dir, 'development.txt', content=content)
         self.command.args = self.parser.parse_args(['-r'])
 
         self.command.run()
@@ -77,7 +84,13 @@ class TestCommand(unittest.TestCase):
         common_reqs = open(os.path.join(self.command.requirements_dir, 'common.txt'))
         self.assertEqual('Django==1.7\nflake8==2.5\n', common_reqs.read())
         dev_reqs = open(os.path.join(self.command.requirements_dir, 'development.txt'))
-        self.assertEqual('-r common.txt\n%s\nmock==1.1\nnose==1.3\n' % vcs_line, dev_reqs.read())
+        expected = '-r common.txt\n%s\n%s\nmock==1.1\nnose==1.3\n' % (vcs_line, uri_line)
+        self.assertEqual(expected, dev_reqs.read())
+
+    def test_run_invalid_option(self):
+        result = self.command.run()
+
+        self.assertEqual(1, result)
 
 
 class TestRemoveExtra(unittest.TestCase):
@@ -93,31 +106,7 @@ class TestRemoveExtra(unittest.TestCase):
 
     @patch('subprocess.check_output')
     @patch('subprocess.check_call')
-    def test_determine_extra_packages_no_discrepancies(self, mock_check_call, mock_check_output):
-        mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\n'
-        _create_requirements_file(self.command.requirements_dir)
-
-        extras = self.command.determine_extra_packages()
-
-        self.assertEqual(set(), extras)
-        self.assertFalse(mock_check_call.called)
-
-    @patch('subprocess.check_output')
-    @patch('subprocess.check_call')
-    def test_determine_extra_packages(self, mock_check_call, mock_check_output):
-        mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\ndjango-nose==1.0\n'
-        _create_requirements_file(self.command.requirements_dir)
-
-        extras = self.command.determine_extra_packages()
-
-        self.assertEqual(1, len(extras))
-        self.assertEqual("django-nose", list(extras)[0].name)
-        self.assertFalse(mock_check_call.called)
-
-    @patch('subprocess.check_output')
-    @patch('subprocess.check_call')
-    def test_determine_extra_packages_with_dashe_directive(self,
-                                                           mock_check_call, mock_check_output):
+    def test_remove_extra_packages_with_dashe_directive(self, mock_check_call, mock_check_output):
         mock_check_output.return_value = \
             'mock==1.2\nDjango==1.7\nnose==1.3\n' \
             '-e http://example.com/some-repo.git\n' \
@@ -125,7 +114,7 @@ class TestRemoveExtra(unittest.TestCase):
         _create_requirements_file(self.command.requirements_dir,
                                   'mock==1.2\nDjango==1.7\nnose==1.3\n')
 
-        extras = self.command.determine_extra_packages()
+        extras = self.command._determine_extra_packages()
 
         extras = sorted(list(extras), key=get_key)
         self.assertEqual(2, len(extras))
@@ -176,5 +165,3 @@ class TestRemoveExtra(unittest.TestCase):
         self.command.run()
 
         mock_check_call.assert_called_once_with(['pip', 'uninstall', '-y', 'django-nose'])
-
-    # TODO check if we really need tests for all these cases or if some are redundant
