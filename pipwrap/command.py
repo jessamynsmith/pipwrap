@@ -45,11 +45,14 @@ class Command(object):
         return filename
 
     def _format_requirements_line(self, package):
-        specs = ['%s%s' % (spec[0], spec[1]) for spec in package.specs]
-        return '%s%s\n' % (package.name, ','.join(specs))
+        if package.line.strip().startswith('-e'):
+            text = package.line
+        else:
+            specs = ['%s%s' % (spec[0], spec[1]) for spec in package.specs]
+            text = '%s%s' % (package.name, ','.join(specs))
+        return '%s\n' % text
 
     def _write_requirements_file(self, req_file, filename):
-        # TODO maybe need to preserve vcs lines
         filename = os.path.join(self.requirements_dir, filename)
         with open(filename, 'w+') as req_output_file:
             req_output_file.writelines(req_file.included_files)

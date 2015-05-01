@@ -65,8 +65,10 @@ class TestCommand(unittest.TestCase):
         mock_check_output.return_value = 'mock==1.1\nflake8==2.5\n'
         _create_requirements_file(self.command.requirements_dir, 'common.txt',
                                   content='Django==1.7\n')
+        vcs_line = ('-e git://github.com/jessamynsmith/django_coverage_plugin.git@'
+                    'f03bdc0981ceface4bfea6aa3544e519a2b908aa#egg=django-coverage-plugin')
         _create_requirements_file(self.command.requirements_dir, 'development.txt',
-                                  content='-r common.txt\nmock==1.2\nnose==1.3\n')
+                                  content='-r common.txt\nmock==1.2\n%s\nnose==1.3\n' % vcs_line)
         self.command.args = self.parser.parse_args(['-r'])
 
         self.command.run()
@@ -75,7 +77,7 @@ class TestCommand(unittest.TestCase):
         common_reqs = open(os.path.join(self.command.requirements_dir, 'common.txt'))
         self.assertEqual('Django==1.7\nflake8==2.5\n', common_reqs.read())
         dev_reqs = open(os.path.join(self.command.requirements_dir, 'development.txt'))
-        self.assertEqual('-r common.txt\nmock==1.1\nnose==1.3\n', dev_reqs.read())
+        self.assertEqual('-r common.txt\n%s\nmock==1.1\nnose==1.3\n' % vcs_line, dev_reqs.read())
 
 
 class TestRemoveExtra(unittest.TestCase):
