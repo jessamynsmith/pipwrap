@@ -45,7 +45,7 @@ class Command(object):
         return filename
 
     def _format_requirements_line(self, package):
-        if package.line.strip().startswith('-e'):
+        if package.uri:
             text = package.line
         else:
             specs = ['%s%s' % (spec[0], spec[1]) for spec in package.specs]
