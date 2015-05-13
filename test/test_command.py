@@ -32,8 +32,9 @@ class TestCommand(unittest.TestCase):
 
     def test_get_filename(self):
         self.command._get_filename_key = MagicMock(side_effect=['a', 0])
+        package = MagicMock(name='package_name')
 
-        filename = self.command._get_filename('', ['test.text'], '')
+        filename = self.command._get_filename(package, ['test.text'], '')
 
         self.assertEqual('test.text', filename)
 
@@ -64,17 +65,21 @@ class TestCommand(unittest.TestCase):
 
         self.assertTrue(os.path.exists(self.command.requirements_dir))
         common_reqs = open(os.path.join(self.command.requirements_dir, 'common.txt'))
-        self.assertEqual('Django==1.7\nflake8==2.5\nmock==1.1\nnose==1.3\n', common_reqs.read())
+        self.assertEqual('flake8==2.5\nmock==1.1\n', common_reqs.read())
 
     @patch('subprocess.check_output')
     def test_run_generate_requirements_files(self, mock_check_output):
-        mock_check_output.return_value = 'mock==1.1\nflake8==2.5\n'
-        _create_requirements_file(self.command.requirements_dir, 'common.txt',
-                                  content='Django==1.7\n')
         vcs_line = ('-e git://github.com/jessamynsmith/django_coverage_plugin.git@'
                     'f03bdc0981ceface4bfea6aa3544e519a2b908aa#egg=django-coverage-plugin')
         uri_line = '-e http://example.com/some-repo.git'
-        content = '-r common.txt\nmock==1.2\n%s\nnose==1.3\n%s\n' % (vcs_line, uri_line)
+        uri_line2 = '-e http://anotherexample.com/some-repo.git'
+        uri_line3 = '-e http://athirdrepo.com/some-repo.git'
+        mock_check_output.return_value = ('mock==1.1\nflake8==2.5\nDjango==1.7\n%s\n%s\n%s\n'
+                                          % (uri_line, vcs_line, uri_line2))
+        _create_requirements_file(self.command.requirements_dir, 'common.txt',
+                                  content='Django==1.7\ngunicorn\n')
+        content = ('-r common.txt\nmock==1.2\n%s\nnose==1.3\n%s\n%s\n'
+                   % (vcs_line, uri_line, uri_line3))
         _create_requirements_file(self.command.requirements_dir, 'development.txt', content=content)
         self.command.args = self.parser.parse_args(['-r'])
 
@@ -82,9 +87,9 @@ class TestCommand(unittest.TestCase):
 
         self.assertTrue(os.path.exists(self.command.requirements_dir))
         common_reqs = open(os.path.join(self.command.requirements_dir, 'common.txt'))
-        self.assertEqual('Django==1.7\nflake8==2.5\n', common_reqs.read())
+        self.assertEqual('Django==1.7\nflake8==2.5\n%s\n' % uri_line2, common_reqs.read())
         dev_reqs = open(os.path.join(self.command.requirements_dir, 'development.txt'))
-        expected = '-r common.txt\n%s\n%s\nmock==1.1\nnose==1.3\n' % (vcs_line, uri_line)
+        expected = '-r common.txt\n%s\n%s\nmock==1.1\n' % (vcs_line, uri_line)
         self.assertEqual(expected, dev_reqs.read())
 
     def test_run_invalid_option(self):

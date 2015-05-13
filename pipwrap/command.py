@@ -22,6 +22,7 @@ class RequirementsFile(object):
     def __init__(self):
         self.included_files = []
         self.packages = set()
+        self.found = set()
 
 
 class Command(object):
@@ -36,7 +37,10 @@ class Command(object):
         return input(prompt)  # pragma nocover
 
     def _get_filename(self, package, filenames, filename_text):
-        print("Which file should package '%s' go into? %s" % (package, filename_text))
+        package_text = package.name
+        if not package_text:
+            package_text = package.line
+        print("Which file should package '%s' go into? %s" % (package_text, filename_text))
         prompt = '> '
         filename = ''
         while not filename:
@@ -60,7 +64,8 @@ class Command(object):
         with open(filename, 'w+') as req_output_file:
             req_output_file.writelines(req_file.included_files)
             for package in sorted(req_file.packages, key=get_key):
-                req_output_file.write(self._format_requirements_line(package))
+                if package.line in req_file.found:
+                    req_output_file.write(self._format_requirements_line(package))
 
     def _get_installed_packages(self):
         """ Get a set of installed packages
@@ -97,12 +102,14 @@ class Command(object):
         :return: Tuple of (updated_installed_set, installed_not_in_requirements)
         """
         missing_set = installed_set.copy()
-        for req_file in requirement_files:
-            for requirement in requirement_files[req_file].packages:
+        for req_filename in requirement_files:
+            for requirement in requirement_files[req_filename].packages:
                 for installed in installed_set:
-                    if installed.name == requirement.name:
+                    if ((installed.name and installed.name == requirement.name) or
+                            (installed.line == requirement.line)):
+                        requirement_files[req_filename].found.add(requirement.line)
                         requirement.specs = installed.specs
-                        missing_set.remove(installed)
+                        missing_set.discard(installed)
                         break
         return requirement_files, missing_set
 
@@ -128,7 +135,8 @@ class Command(object):
 
         # Add missing requirements to user-selected file
         for requirement in missing_reqs:
-            filename = self._get_filename(requirement.name, filenames, filename_text)
+            filename = self._get_filename(requirement, filenames, filename_text)
+            req_files[filename].found.add(requirement.line)
             req_files[filename].packages.add(requirement)
 
         for req_filename in req_files:
