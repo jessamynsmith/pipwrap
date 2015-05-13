@@ -14,11 +14,15 @@ def create_parser():
 
     parser.add_argument('--version', action='store_true', default=False,
                         help="Show program's version number.")
+
     parser.add_argument('-r', '--requirements-files', action='store_true', default=False,
                         help='Generate or update requirements files.')
 
+    parser.add_argument('-c', '--clean', action='store_true', default=False,
+                        help='Remove packages not installed in virtualenv (only valid with -r)')
+
     parser.add_argument('-x', '--remove-extra', action='store_true', default=False,
-                        help='Remove packages not in list (requires list of packages).')
+                        help='Remove packages not installed in virtualenv.')
 
     parser.add_argument('-n', '--dry-run', action='store_true', default=False,
                         help='Don\'t actually make any changes; '
@@ -31,6 +35,8 @@ def verify_args(args):
     has_one_option = (bool(args.requirements_files) ^ bool(args.remove_extra))
     if not has_one_option:
         return 'Must specify requirements-files (-r) or remove-missing (-x).'
+    if args.clean and not args.requirements_files:
+        return '-c is only supported with -r'
     if args.dry_run and not args.remove_extra:
         return '-n is only supported with -x'
     return None

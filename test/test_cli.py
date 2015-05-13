@@ -45,6 +45,14 @@ class TestCli(unittest.TestCase):
         expected_error = "-n is only supported with -x"
         self.assertEqual(expected_error, error_message)
 
+    def test_verify_args_remove_extra_clean(self):
+        args = self.parser.parse_args(['-x', '-c'])
+
+        error_message = cli.verify_args(args)
+
+        expected_error = "-c is only supported with -r"
+        self.assertEqual(expected_error, error_message)
+
     @patch('argparse.ArgumentParser.exit')
     def test_error(self, mock_exit):
         cli.error(self.parser, 'An error occurred!')

@@ -64,7 +64,8 @@ class Command(object):
         with open(filename, 'w+') as req_output_file:
             req_output_file.writelines(req_file.included_files)
             for package in sorted(req_file.packages, key=get_key):
-                if package.line in req_file.found:
+                # If clean isn't specified, write all packages originally in requirements
+                if not self.args.clean or package.line in req_file.found:
                     req_output_file.write(self._format_requirements_line(package))
 
     def _get_installed_packages(self):

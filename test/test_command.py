@@ -65,7 +65,7 @@ class TestCommand(unittest.TestCase):
 
         self.assertTrue(os.path.exists(self.command.requirements_dir))
         common_reqs = open(os.path.join(self.command.requirements_dir, 'common.txt'))
-        self.assertEqual('flake8==2.5\nmock==1.1\n', common_reqs.read())
+        self.assertEqual('Django==1.7\nflake8==2.5\nmock==1.1\nnose==1.3\n', common_reqs.read())
 
     @patch('subprocess.check_output')
     def test_run_generate_requirements_files(self, mock_check_output):
@@ -81,7 +81,7 @@ class TestCommand(unittest.TestCase):
         content = ('-r common.txt\nmock==1.2\n%s\nnose==1.3\n%s\n%s\n'
                    % (vcs_line, uri_line, uri_line3))
         _create_requirements_file(self.command.requirements_dir, 'development.txt', content=content)
-        self.command.args = self.parser.parse_args(['-r'])
+        self.command.args = self.parser.parse_args(['-rc'])
 
         self.command.run()
 
