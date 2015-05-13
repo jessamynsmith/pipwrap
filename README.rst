@@ -41,6 +41,9 @@ working directory with:
 Usage
 -----
 
+Note: You may ignore warnings about "Recursive requirements not supported." These
+are due to current limitations of the requirements-parser library.
+
 **Getting Started with pipwrap**
 
 1. (Optional) Create requirements files with a list of your packages
@@ -58,11 +61,22 @@ Usage
 1. Interactively update requirements files from currently installed
    packages:
 
-   pipwrap -r
+   pipwrap -r  # Adds packages in virtualenv
+   pipwrap -rc  # Adds packages in virtualenv and removes packages not in virtualenv
 
-3. Remove stray packages in virtualenv:
+2. Remove stray packages in virtualenv:
 
    pipwrap -x
+
+3. See discrepancies between installed packages and requirements files:
+
+   pipwrap -l
+
+NOTE: This last option can be used to determine what the other options would do. Any packages
+in the "Packages installed but not present in requirements" section would be uninstalled with
+the -x option or added to requirements with the -r option. Any packages in the "Packages present
+in requirements but not installed" section would be removed from the requirements files with the
+-rc option.
 
 Development
 -----------

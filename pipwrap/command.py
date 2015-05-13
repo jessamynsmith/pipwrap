@@ -36,10 +36,14 @@ class Command(object):
     def _get_filename_key(self, prompt):
         return input(prompt)  # pragma nocover
 
-    def _get_filename(self, package, filenames, filename_text):
+    def _get_package_text(self, package):
         package_text = package.name
         if not package_text:
             package_text = package.line
+        return package_text
+
+    def _get_filename(self, package, filenames, filename_text):
+        package_text = self._get_package_text(package)
         print("Which file should package '%s' go into? %s" % (package_text, filename_text))
         prompt = '> '
         filename = ''
@@ -163,20 +167,48 @@ class Command(object):
             print("No packages to be removed")
         else:
             package_names = [package.name for package in removal_set]
-            if self.args.dry_run:
-                print("The following packages would be removed:\n    %s\n" %
-                      "\n    ".join(package_names))
-            else:
-                print("Removing packages\n")
-                args = [
-                    "pip",
-                    "uninstall",
-                    "-y",
-                ]
-                args.extend(package_names)
-                subprocess.check_call(args)
+            print("Removing packages\n")
+            args = [
+                "pip",
+                "uninstall",
+                "-y",
+            ]
+            args.extend(package_names)
+            subprocess.check_call(args)
 
         return 0
+
+    def lint(self):
+        """ Find discrepancies between requirements files and virtualenv """
+        print("Discrepancies between requirements files and virtualenv\n")
+
+        installed_reqs = self._get_installed_packages()
+        req_files = self._get_requirements_from_files()
+        (req_files, missing_reqs) = self._compare_installed_and_required(installed_reqs, req_files)
+
+        result = 0
+
+        print('Packages present in requirements but not installed:')
+        print('---------------------------------------------------')
+        for req_filename in req_files:
+            req_file = req_files[req_filename]
+            for package in sorted(req_file.packages, key=get_key):
+                if package.line not in req_file.found:
+                    result = 1
+                    text = self._get_package_text(package)
+                    print(text)
+        print('---------------------------------------------------\n')
+
+        print('Packages installed but not present in requirements:')
+        print('---------------------------------------------------')
+        if missing_reqs:
+            result = 1
+            for package in sorted(missing_reqs, key=get_key):
+                text = self._get_package_text(package)
+                print(text)
+        print('---------------------------------------------------\n')
+
+        return result
 
     def run(self):
         result = 1
@@ -184,4 +216,6 @@ class Command(object):
             result = self.generate_requirements_files()
         elif self.args.remove_extra:
             result = self.remove_extra_packages()
+        elif self.args.lint:
+            result = self.lint()
         return result

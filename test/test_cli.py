@@ -20,7 +20,8 @@ class TestCli(unittest.TestCase):
 
         error_message = cli.verify_args(args)
 
-        expected_error = ('Must specify requirements-files (-r) or remove-missing (-x).')
+        expected_error = ('Must specify --requirements-files (-r) or --remove-missing (-x) '
+                          'or --lint (-l).')
         self.assertEqual(expected_error, error_message)
 
     def test_verify_args_generate(self):
@@ -30,20 +31,19 @@ class TestCli(unittest.TestCase):
 
         self.assertEqual(None, error_message)
 
-    def test_verify_args_remove_extra_dry_run(self):
-        args = self.parser.parse_args(['-x', '-n'])
+    def test_verify_args_lint(self):
+        args = self.parser.parse_args(['-l'])
 
         error_message = cli.verify_args(args)
 
         self.assertEqual(None, error_message)
 
-    def test_verify_args_update_dry_run(self):
-        args = self.parser.parse_args(['-r', '-n'])
+    def test_verify_args_remove_extra(self):
+        args = self.parser.parse_args(['-x'])
 
         error_message = cli.verify_args(args)
 
-        expected_error = "-n is only supported with -x"
-        self.assertEqual(expected_error, error_message)
+        self.assertEqual(None, error_message)
 
     def test_verify_args_remove_extra_clean(self):
         args = self.parser.parse_args(['-x', '-c'])
@@ -88,12 +88,14 @@ class TestCli(unittest.TestCase):
             self.assertEqual('pipwrap 0.4', '{0}'.format(e))
         mock_require.assert_called_once_with('pipwrap')
 
-    def test_main_success(self):
-        sys.argv = ['pipwrap', '-x', '-n']
+    @patch('pipwrap.command.Command.run')
+    def test_main_success(self, mock_run):
+        mock_run.return_value = 1
+        sys.argv = ['pipwrap', '-l']
 
         result = cli.main()
 
-        self.assertEqual(0, result)
+        self.assertEqual(1, result)
 
     @patch('argparse.ArgumentParser')
     def test_main_keyboard_interrupt(self, mock_argparse):

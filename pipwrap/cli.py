@@ -24,21 +24,18 @@ def create_parser():
     parser.add_argument('-x', '--remove-extra', action='store_true', default=False,
                         help='Remove packages not installed in virtualenv.')
 
-    parser.add_argument('-n', '--dry-run', action='store_true', default=False,
-                        help='Don\'t actually make any changes; '
-                             'only show what would have been done.')
+    parser.add_argument('-l', '--lint', action='store_true', default=False,
+                        help='Show discrepancies between requirements files and virtualenv.')
 
     return parser
 
 
 def verify_args(args):
-    has_one_option = (bool(args.requirements_files) ^ bool(args.remove_extra))
+    has_one_option = (bool(args.requirements_files) ^ bool(args.remove_extra) ^ bool(args.lint))
     if not has_one_option:
-        return 'Must specify requirements-files (-r) or remove-missing (-x).'
+        return 'Must specify --requirements-files (-r) or --remove-missing (-x) or --lint (-l).'
     if args.clean and not args.requirements_files:
         return '-c is only supported with -r'
-    if args.dry_run and not args.remove_extra:
-        return '-n is only supported with -x'
     return None
 
 
@@ -59,7 +56,6 @@ def main():
         if error_message:
             error(parser, error_message)
         command = Command(parsed_args)
-        command.run()
-        return 0
+        return command.run()
     except KeyboardInterrupt:
         sys.exit()

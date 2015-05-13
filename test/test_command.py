@@ -149,15 +149,35 @@ class TestRemoveExtra(unittest.TestCase):
 
     @patch('subprocess.check_output')
     @patch('subprocess.check_call')
-    def test_run_remove_extra_packages_dry_run(self, mock_check_call, mock_check_output):
-        mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\ndjango-nose==1.0\n'
+    def test_lint(self, mock_check_call, mock_check_output):
+        mock_check_output.return_value = 'mock==1.2\nDjango==1.7\nnose==1.3\n'
         _create_requirements_file(self.command.requirements_dir)
-        self.command.args = self.parser.parse_args(['-xn'])
+
+        self.command.lint()
+
+        lines = sys.stdout.getvalue().split('\n')
+        self.assertEqual('---------------------------------------------------', lines[3])
+        self.assertEqual('---------------------------------------------------', lines[4])
+        self.assertEqual('---------------------------------------------------', lines[7])
+        self.assertEqual('---------------------------------------------------', lines[8])
+        self.assertFalse(mock_check_call.called)
+
+    @patch('subprocess.check_output')
+    @patch('subprocess.check_call')
+    def test_run_lint(self, mock_check_call, mock_check_output):
+        mock_check_output.return_value = 'mock==1.2\nDjango==1.7\ndjango-nose==1.0\n'
+        _create_requirements_file(self.command.requirements_dir)
+        self.command.args = self.parser.parse_args(['-l'])
 
         self.command.run()
 
-        expected = "The following packages would be removed:\n    django-nose"
-        self.assertEqual(expected, sys.stdout.getvalue().strip())
+        lines = sys.stdout.getvalue().split('\n')
+        self.assertEqual('---------------------------------------------------', lines[3])
+        self.assertEqual('nose', lines[4])
+        self.assertEqual('---------------------------------------------------', lines[5])
+        self.assertEqual('---------------------------------------------------', lines[8])
+        self.assertEqual('django-nose', lines[9])
+        self.assertEqual('---------------------------------------------------', lines[10])
         self.assertFalse(mock_check_call.called)
 
     @patch('subprocess.check_output')
