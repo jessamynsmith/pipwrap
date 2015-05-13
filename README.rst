@@ -13,8 +13,9 @@ add to one of your requirements files, then pipwrap is the tool for you.
 Features
 --------
 
--  Inspect a list of packages and create or update requirements files
+-  Create or update requirements files based on installed packages
 -  Remove stray packages in virtualenv
+-  List discrepancies between installed packages and requirements files
 
 Installation
 ------------
