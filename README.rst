@@ -63,6 +63,7 @@ are due to current limitations of the requirements-parser library.
    packages:
 
    pipwrap -r  # Adds packages in virtualenv
+
    pipwrap -rc  # Adds packages in virtualenv and removes packages not in virtualenv
 
 2. Remove stray packages in virtualenv:
