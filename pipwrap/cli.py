@@ -19,10 +19,12 @@ def create_parser():
                         help='Generate or update requirements files.')
 
     parser.add_argument('-c', '--clean', action='store_true', default=False,
-                        help='Remove packages not installed in virtualenv (only valid with -r)')
+                        help='Remove packages from requirements files that are not installed in '
+                             'virtualenv (only valid with -r)')
 
     parser.add_argument('-x', '--remove-extra', action='store_true', default=False,
-                        help='Remove packages not installed in virtualenv.')
+                        help='Remove packages from virtualenv that are not present in requirements '
+                             'files.')
 
     parser.add_argument('-l', '--lint', action='store_true', default=False,
                         help='Show discrepancies between requirements files and virtualenv.')
