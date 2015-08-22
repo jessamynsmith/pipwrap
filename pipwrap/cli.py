@@ -20,7 +20,7 @@ def create_parser():
 
     parser.add_argument('-c', '--clean', action='store_true', default=False,
                         help='Remove packages from requirements files that are not installed in '
-                             'virtualenv (only valid with -r)')
+                             'virtualenv (only valid with -r).')
 
     parser.add_argument('-x', '--remove-extra', action='store_true', default=False,
                         help='Remove packages from virtualenv that are not present in requirements '
