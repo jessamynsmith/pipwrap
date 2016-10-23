@@ -61,3 +61,6 @@ def main():
         return command.run()
     except KeyboardInterrupt:
         sys.exit()
+
+
+# TODO work from requirements*.txt?
