@@ -1,7 +1,7 @@
 pipwrap
 =======
 
-|Build Status| |Coverage Status| |PyPI Version| |Supported Versions| |Downloads|
+|Build Status| |Coverage Status| |PyPI Version| |Supported Python Versions| |Downloads|
 
 pipwrap simplifies handling Python project requirements across multiple
 environments. pip freeze > requirements.txt gets your project started,
@@ -117,13 +117,19 @@ Install your local copy:
 
     python setup.py.install
 
-.. |Build Status| image:: https://circleci.com/gh/jessamynsmith/pipwrap.svg?style=shield
+
+.. |Build Status| image:: https://img.shields.io/circleci/project/github/jessamynsmith/pipwrap.svg
    :target: https://circleci.com/gh/jessamynsmith/pipwrap
-.. |Coverage Status| image:: https://coveralls.io/repos/jessamynsmith/pipwrap/badge.svg?branch=master
+   :alt: Build status
+.. |Coverage Status| image:: https://img.shields.io/coveralls/jessamynsmith/pipwrap.svg
    :target: https://coveralls.io/r/jessamynsmith/pipwrap?branch=master
-.. |PyPI Version| image:: https://pypip.in/version/pipwrap/badge.svg
+   :alt: Coverage status
+.. |PyPI Version| image:: https://img.shields.io/pypi/v/pipwrap.svg
    :target: https://pypi.python.org/pypi/pipwrap
-.. |Supported Versions| image:: https://pypip.in/py_versions/pipwrap/badge.svg
+   :alt: Latest PyPI version
+.. |Supported Python Versions| image:: https://img.shields.io/pypi/pyversions/pipwrap.svg
    :target: https://pypi.python.org/pypi/pipwrap
-.. |Downloads| image:: https://pypip.in/download/pipwrap/badge.svg
+   :alt: Supported Python versions
+.. |Downloads| image:: https://img.shields.io/pypi/dm/pipwrap.svg
    :target: https://pypi.python.org/pypi/pipwrap
+   :alt: Number of PyPI downloads
