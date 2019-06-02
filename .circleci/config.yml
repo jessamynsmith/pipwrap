@@ -1,0 +1,19 @@
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+      - build:
+          context: paragres
+
+version: 2
+jobs:
+  build:
+    docker:
+      - image: n42org/tox
+    steps:
+      - checkout
+      - run:
+          name: Install Python deps
+          command: |
+            pip install virtualenv
+            tox
